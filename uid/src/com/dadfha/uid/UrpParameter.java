@@ -1,3 +1,6 @@
+// FIXME to be delete?
+
+
 package com.dadfha.uid;
 
 import java.util.HashMap;
@@ -11,6 +14,6 @@ public class UrpParameter {
 		param = new HashMap();
 	}
 
-	// TODO complete this!
+	
 
 }

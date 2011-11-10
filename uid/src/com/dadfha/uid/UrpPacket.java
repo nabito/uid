@@ -2,7 +2,10 @@ package com.dadfha.uid;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class UrpPacket {
 	
@@ -27,6 +30,13 @@ public class UrpPacket {
 		E_UIDC_NOEXS	( (short) 0xffcc );
 		
 		private short code;
+		private static final Map<Short, Error> table = new HashMap<Short, Error>();
+		
+	     static {
+	    	 //for(Error e : Error.values()) // is this better?
+	         for(Error e : EnumSet.allOf(Error.class))
+	               table.put(e.getCode(), e);
+	     }		
 		
 		private Error(short code) {
 			this.code = code;
@@ -35,19 +45,27 @@ public class UrpPacket {
 		public short getCode() {
 			return code;
 		}		
+		
+		public static Error valueOf(short code) {
+			return table.get(code);
+		}
 	}
 	
 	/**
-	 * the version number is fixed to 1 as of current protocol spec (9/11/2011)
+	 * The version number is fixed to 1 as of current protocol spec (9/11/2011)
 	 */
 	private byte version;
 	private byte serialNumber;
 	
 	/**
-	 * the reserved fields are fixed to 0 as of current protocol spec (9/11/2011)
+	 * Can be wither Command ID or Error Code depended on the type of packet
 	 */
-	private byte reservedHigh;
-	private byte reservedLow;
+	short operator;
+	
+	/**
+	 * The reserved fields are fixed to 0 as of current protocol spec (9/11/2011)
+	 */
+	private short reserved;
 	
 	private short plLength;
 	
@@ -55,8 +73,6 @@ public class UrpPacket {
 	
 	public UrpPacket() {
 		version = 1;
-		reservedHigh = 0;
-		reservedLow = 0;
 		data = new ArrayList<Byte>();
 	}
 	
@@ -70,6 +86,14 @@ public class UrpPacket {
 	
 	public void setSerialNumber(byte serialNumber) {
 		this.serialNumber = serialNumber;
+	}
+	
+	public short getOperator() {
+		return operator;
+	}
+	
+	void setOperator(short operator) {
+		this.operator = operator;
 	}
 	
 	public short getLength() {
@@ -93,10 +117,29 @@ public class UrpPacket {
 		updateLength();
 	}
 	
-	public void setData(UrpParameter param) {
-		// TODO extract the parameter based on insertion order
+	public void pack() {
+		
+		// update latest plLength
 		updateLength();
+		// FIXME the order of length should be evaluated after all the data has been inserted
+		// by later correcting the plRange???
+		
+		data.add(version);
+		data.add(serialNumber);
+		data.add( (byte) ( operator & 0x00ff ) ); // java is big endian
+		data.add( (byte) ( (operator & 0xff00 ) >> 8 ) ); 
+		data.add( (byte) ( reserved & 0x00ff ) );
+		data.add( (byte) ( (reserved & 0xff00 ) >> 8 ) ); 
+		data.add( (byte) ( plLength & 0x00ff ) );
+		data.add( (byte) ( (plLength & 0xff00 ) >> 8 ) ); 
+		
+		// TODO make a call to lower pack
+		packParameter();	
 	}
+	
+	// ?Rather than declaring as abstract the UrpPacket can also be used solely?
+	// but when calling pack() from subclass obj which packParameter() get called?
+	void packParameter() {}
 	
 	public void updateData(byte data, int index) {
 		this.data.set(index, data);
