@@ -1,6 +1,7 @@
 package com.dadfha.uid;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -8,6 +9,29 @@ import java.util.List;
 import java.util.Map;
 
 public class UrpPacket {
+	
+	/**
+	 * Define the structure of UrpPacket field each with specific byte index
+	 * @author Wirawit
+	 *
+	 */
+	public enum Field {
+		VER			( (short) 0 ),
+		SERIAL_NO	( (short) 1 ),
+		OPERATOR	( (short) 2 ), // Can be wither Command ID or Error Code depended on the type of packet
+		RESERVED	( (short) 4 ),
+		PL_LENGTH	( (short) 6 );
+		
+		private short byteIndex;
+		
+		private Field(short index) {
+			byteIndex = index;
+		}
+		
+		public short getByteIndex() {
+			return byteIndex;
+		}
+	}
 	
 	public enum Command { 
 		RES_UCD		( (short)0x0001 );
@@ -33,7 +57,7 @@ public class UrpPacket {
 		private static final Map<Short, Error> table = new HashMap<Short, Error>();
 		
 	     static {
-	    	 //for(Error e : Error.values()) // is this better?
+	    	 // XXX for(Error e : Error.values()) // is this better?
 	         for(Error e : EnumSet.allOf(Error.class))
 	               table.put(e.getCode(), e);
 	     }		
@@ -51,90 +75,84 @@ public class UrpPacket {
 		}
 	}
 	
-	/**
-	 * The version number is fixed to 1 as of current protocol spec (9/11/2011)
-	 */
-	private byte version;
-	private byte serialNumber;
-	
-	/**
-	 * Can be wither Command ID or Error Code depended on the type of packet
-	 */
-	short operator;
-	
-	/**
-	 * The reserved fields are fixed to 0 as of current protocol spec (9/11/2011)
-	 */
-	private short reserved;
-	
-	private short plLength;
-	
 	private List<Byte> data;
+	private static final byte BASE_BYTE_BLOCKS = 8;
+	// XXX or to get it from Field.values().length but must change field structure to be as per byte for each constant
+	// the good: more dynamic, the bad: code will look a bit more verbose
 	
 	public UrpPacket() {
-		version = 1;
-		data = new ArrayList<Byte>();
+		
+		
+		// all array init to null
+		data = new ArrayList<Byte>( Arrays.asList( new Byte[BASE_BYTE_BLOCKS] ) ); 
+		
+		// The version number is fixed to 1 as of current protocol spec (9/11/2011)
+		data.set( Field.VER.getByteIndex(), (byte) 1 );			
+		
+		// pre-fill the reserved field with 0 as of current protocol spec (9/11/2011)
+		data.set( Field.RESERVED.getByteIndex(), (byte) 0 );
+		data.set( Field.RESERVED.getByteIndex() + 1, (byte) 0 );		
+		
 	}
 	
 	public byte getVersion() {
-		return version;
+		return data.get( Field.VER.getByteIndex() );
 	}
 	
 	public byte getSerialNumber() {
-		return serialNumber;
+		return data.get( Field.SERIAL_NO.getByteIndex() );
 	}
 	
 	public void setSerialNumber(byte serialNumber) {
-		this.serialNumber = serialNumber;
+		data.set(Field.SERIAL_NO.getByteIndex(), serialNumber );
 	}
 	
+	// java is big endian, hence the reversal of byte order from spec
 	public short getOperator() {
-		return operator;
+		return (short) ( ( data.get( Field.OPERATOR.getByteIndex() + 1 ) << 8 ) | 
+							data.get( Field.OPERATOR.getByteIndex() ) );
 	}
 	
 	void setOperator(short operator) {
-		this.operator = operator;
+		data.set( Field.OPERATOR.getByteIndex(), ( (byte) ( operator & 0x00ff ) ) );
+		data.set( Field.OPERATOR.getByteIndex() + 1, ( (byte) ( ( operator & 0xff00 ) >>> 8 ) ) );
 	}
 	
 	public short getLength() {
-		return plLength;
+		return (short) ( ( data.get( Field.PL_LENGTH.getByteIndex() + 1 ) << 8 ) | 
+				data.get( Field.PL_LENGTH.getByteIndex() ) );
 	}
 	
 	public String getLengthInHex() {
-		return Integer.toHexString(plLength);	 
+		return Integer.toHexString( getLength() );	 
 	}
 	
 	private void updateLength() {
-		plLength = (short)( ( data.size() / 8 ) + 1 );
+		short plLength = (short)( ( data.size() / 8 ) + 1 );
+		data.set( Field.PL_LENGTH.getByteIndex(), ( (byte) ( plLength & 0x00ff ) ) );
+		data.set( Field.PL_LENGTH.getByteIndex() + 1, ( (byte) ( ( plLength & 0xff00 ) >>> 8 ) ) );		
 	}
 	
 	public List<Byte> getData() {
 		return Collections.unmodifiableList(data);
 	}	
 	
-	public void setData(byte data) {
+	public void addByte(byte data) {
 		this.data.add(data);
-		updateLength();
 	}
 	
+	public void addShort(short data) {
+		this.data.add( (byte) (data & 0x00ff) );
+		this.data.add( (byte) ( (data & 0xff00) >>> 8 ) );
+		// XXX shall we return this.data.size() to indicate the index of currently add data?
+	}
+	
+	public void updateData(short index, byte data) {
+		this.data.set( index, data );
+	}	
+	
 	public void pack() {
-		
-		//FIXME rather than having a pack() and add the data one by one, we can fix
-		// the start array index of each field in the packet (using enum)
-		// map is more eff for random access of obj but use more mem and proc
-		// since our main job is to make packet based on std. there is no del/add element
-		// or even search for unknown value in packet
-		// there will be no variables in class, hence no duplicate in mem and prob of sync
-		// just one more step of mem ref.
-		
-		data.add(version);
-		data.add(serialNumber);
-		data.add( (byte) ( operator & 0x00ff ) ); // java is big endian
-		data.add( (byte) ( (operator & 0xff00 ) >> 8 ) ); 
-		data.add( (byte) ( reserved & 0x00ff ) );
-		data.add( (byte) ( (reserved & 0xff00 ) >> 8 ) ); 
-		data.add( (byte) ( plLength & 0x00ff ) );
-		data.add( (byte) ( (plLength & 0xff00 ) >> 8 ) ); 
+		// TODO remove this?
 		
 		// allow the subclass obj to pack their data
 		packParameter();	
@@ -146,8 +164,14 @@ public class UrpPacket {
 	// Rather than declaring as abstract the UrpPacket can also be used solely
 	void packParameter() {}
 	
-	public void updateData(byte data, int index) {
-		this.data.set(index, data);
+	/**
+	 * Helper function to save short in byte array list
+	 * @param lowIndex
+	 * @param highIndex
+	 * @param data
+	 */
+	private void setByteList(int lowIndex, int highIndex, short data) {
+		// TODO also change the enum Field to reflect byte addressing
 	}
 	
 

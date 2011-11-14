@@ -11,7 +11,7 @@ public class UrpReceive extends UrpPacket {
 	}
 	
 	public void setErrorCode(Error error) {
-		operator = error.getCode();
+		this.setOperator( error.getCode() );
 	}
 	
 	public void packParameter() {
