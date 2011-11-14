@@ -119,10 +119,13 @@ public class UrpPacket {
 	
 	public void pack() {
 		
-		// update latest plLength
-		updateLength();
-		// FIXME the order of length should be evaluated after all the data has been inserted
-		// by later correcting the plRange???
+		//FIXME rather than having a pack() and add the data one by one, we can fix
+		// the start array index of each field in the packet (using enum)
+		// map is more eff for random access of obj but use more mem and proc
+		// since our main job is to make packet based on std. there is no del/add element
+		// or even search for unknown value in packet
+		// there will be no variables in class, hence no duplicate in mem and prob of sync
+		// just one more step of mem ref.
 		
 		data.add(version);
 		data.add(serialNumber);
@@ -133,12 +136,14 @@ public class UrpPacket {
 		data.add( (byte) ( plLength & 0x00ff ) );
 		data.add( (byte) ( (plLength & 0xff00 ) >> 8 ) ); 
 		
-		// TODO make a call to lower pack
+		// allow the subclass obj to pack their data
 		packParameter();	
+		
+		// update latest plLength
+		updateLength();	//TODO change the value in arraylist directly					
 	}
 	
-	// ?Rather than declaring as abstract the UrpPacket can also be used solely?
-	// but when calling pack() from subclass obj which packParameter() get called?
+	// Rather than declaring as abstract the UrpPacket can also be used solely
 	void packParameter() {}
 	
 	public void updateData(byte data, int index) {
