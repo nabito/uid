@@ -119,13 +119,11 @@ public class UrpPacket {
 	
 	public void pack() {
 		
-		//FIXME rather than having a pack() and add the data one by one, we can fix
-		// the start array index of each field in the packet (using enum)
-		// map is more eff for random access of obj but use more mem and proc
-		// since our main job is to make packet based on std. there is no del/add element
-		// or even search for unknown value in packet
-		// there will be no variables in class, hence no duplicate in mem and prob of sync
-		// just one more step of mem ref.
+		// FIXME an alternative approach to all this is to make it simple
+		// let's have class member to represent all fields
+		// no var to hold everything in order of the packet
+		// why? coz' we will hand over the data to Transport Layer protocol buffer in the correct order later
+		// so the order of insertion is strictly the sequence of the code!
 		
 		data.add(version);
 		data.add(serialNumber);
