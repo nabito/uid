@@ -16,11 +16,14 @@ public class UrpPacket {
 	 *
 	 */
 	public enum Field {
-		VER			( (short) 0 ),
-		SERIAL_NO	( (short) 1 ),
-		OPERATOR	( (short) 2 ), // Can be wither Command ID or Error Code depended on the type of packet
-		RESERVED	( (short) 4 ),
-		PL_LENGTH	( (short) 6 );
+		VER				( (short) 0 ),
+		SERIAL_NO		( (short) 1 ),
+		OPERATOR_LOW	( (short) 2 ), // Can be wither Command ID or Error Code depended on the type of packet
+		OPERATOR_HIGH	( (short) 3 ),
+		RESERVED_LOW	( (short) 4 ),
+		RESERVED_HIGH	( (short) 5 ),
+		PL_LENGTH_LOW	( (short) 6 ),
+		PL_LENGTH_HIGH	( (short) 7 );
 		
 		private short byteIndex;
 		
@@ -33,65 +36,19 @@ public class UrpPacket {
 		}
 	}
 	
-	public enum Command { 
-		RES_UCD		( (short)0x0001 );
-		
-		private short code;
-		
-		private Command(short code) {
-			this.code = code;
-		}
-		
-		public short getCode() {
-			return code;
-		}
-	}
-	
-	public enum Error {
-		E_UIDC_OK		( (short) 0x0000 ),
-		E_UIDC_NOSPT	( (short) 0xffef ),
-		E_UIDC_PAR		( (short) 0xffdf ),
-		E_UIDC_NOEXS	( (short) 0xffcc );
-		
-		private short code;
-		private static final Map<Short, Error> table = new HashMap<Short, Error>();
-		
-	     static {
-	    	 // XXX for(Error e : Error.values()) // is this better?
-	         for(Error e : EnumSet.allOf(Error.class))
-	               table.put(e.getCode(), e);
-	     }		
-		
-		private Error(short code) {
-			this.code = code;
-		}
-		
-		public short getCode() {
-			return code;
-		}		
-		
-		public static Error valueOf(short code) {
-			return table.get(code);
-		}
-	}
-	
 	private List<Byte> data;
-	private static final byte BASE_BYTE_BLOCKS = 8;
-	// XXX or to get it from Field.values().length but must change field structure to be as per byte for each constant
-	// the good: more dynamic, the bad: code will look a bit more verbose
 	
 	public UrpPacket() {
 		
 		
-		// all array init to null
-		data = new ArrayList<Byte>( Arrays.asList( new Byte[BASE_BYTE_BLOCKS] ) ); 
+		// all array locations, equal to number of byte blocks, are all init to null
+		data = new ArrayList<Byte>( Arrays.asList( new Byte[Field.values().length] ) ); 
 		
 		// The version number is fixed to 1 as of current protocol spec (9/11/2011)
 		data.set( Field.VER.getByteIndex(), (byte) 1 );			
 		
 		// pre-fill the reserved field with 0 as of current protocol spec (9/11/2011)
-		data.set( Field.RESERVED.getByteIndex(), (byte) 0 );
-		data.set( Field.RESERVED.getByteIndex() + 1, (byte) 0 );		
+		setByteBlocks( Field.RESERVED_LOW.getByteIndex(), (byte) 0 );	
 		
 	}
 	
@@ -109,18 +66,15 @@ public class UrpPacket {
 	
 	// java is big endian, hence the reversal of byte order from spec
 	public short getOperator() {
-		return (short) ( ( data.get( Field.OPERATOR.getByteIndex() + 1 ) << 8 ) | 
-							data.get( Field.OPERATOR.getByteIndex() ) );
+		return getByteBlocksInShort( Field.OPERATOR_LOW.getByteIndex() );
 	}
 	
 	void setOperator(short operator) {
-		data.set( Field.OPERATOR.getByteIndex(), ( (byte) ( operator & 0x00ff ) ) );
-		data.set( Field.OPERATOR.getByteIndex() + 1, ( (byte) ( ( operator & 0xff00 ) >>> 8 ) ) );
+		setByteBlocks(Field.OPERATOR_LOW.getByteIndex(), operator);
 	}
 	
 	public short getLength() {
-		return (short) ( ( data.get( Field.PL_LENGTH.getByteIndex() + 1 ) << 8 ) | 
-				data.get( Field.PL_LENGTH.getByteIndex() ) );
+		return getByteBlocksInShort( Field.PL_LENGTH_LOW.getByteIndex() );
 	}
 	
 	public String getLengthInHex() {
@@ -129,25 +83,37 @@ public class UrpPacket {
 	
 	private void updateLength() {
 		short plLength = (short)( ( data.size() / 8 ) + 1 );
-		data.set( Field.PL_LENGTH.getByteIndex(), ( (byte) ( plLength & 0x00ff ) ) );
-		data.set( Field.PL_LENGTH.getByteIndex() + 1, ( (byte) ( ( plLength & 0xff00 ) >>> 8 ) ) );		
+		setByteBlocks( Field.PL_LENGTH_LOW.getByteIndex(), plLength );
 	}
 	
 	public List<Byte> getData() {
 		return Collections.unmodifiableList(data);
 	}	
 	
-	public void addByte(byte data) {
+	/**
+	 * add new byte to the collection, each adding will result in update of the packet length field
+	 * @param data
+	 * @return int index of currently add byte
+	 */
+	public int addByte(byte data) {
 		this.data.add(data);
+		updateLength();
+		return this.data.size() - 1;
 	}
 	
-	public void addShort(short data) {
+	/**
+	 * add new short to the collection, each adding will result in update of the packet length field
+	 * @param data
+	 * @return int index of currently add short
+	 */
+	public int addShort(short data) {
 		this.data.add( (byte) (data & 0x00ff) );
 		this.data.add( (byte) ( (data & 0xff00) >>> 8 ) );
-		// XXX shall we return this.data.size() to indicate the index of currently add data?
+		updateLength();
+		return this.data.size() - 2;
 	}
 	
-	public void updateData(short index, byte data) {
+	public void updateData(int index, byte data) {
 		this.data.set( index, data );
 	}	
 	
@@ -155,23 +121,30 @@ public class UrpPacket {
 		// TODO remove this?
 		
 		// allow the subclass obj to pack their data
-		packParameter();	
-		
-		// update latest plLength
-		updateLength();	//TODO change the value in arraylist directly					
+		packParameter();				
 	}
 	
 	// Rather than declaring as abstract the UrpPacket can also be used solely
 	void packParameter() {}
 	
 	/**
-	 * Helper function to save short in byte array list
+	 * Get 2 byte blocks into 1 short from an index
+	 * @param index
+	 * @return short the combined bytes of index and index+1 from little endian to big endian order
+	 */
+	private short getByteBlocksInShort(int index) {
+		return (short) ( ( data.get( index + 1 ) << 8 ) | 
+				data.get( index ) );		
+	}
+	
+	/**
+	 * Helper function to save short in byte array list from index to index + 1
 	 * @param lowIndex
-	 * @param highIndex
 	 * @param data
 	 */
-	private void setByteList(int lowIndex, int highIndex, short data) {
-		// TODO also change the enum Field to reflect byte addressing
+	private void setByteBlocks(int index, short data) {
+		this.data.set( index, ( (byte) ( data & 0x00ff ) ) );
+		this.data.set( index + 1, ( (byte) ( ( data & 0xff00 ) >>> 8 ) ) );		
 	}
 	
 
