@@ -45,7 +45,7 @@ public class UrpPacket {
 		data.set( Field.VER.getByteIndex(), (byte) 1 );			
 		
 		// pre-fill the reserved field with 0 as of current protocol spec (9/11/2011)
-		setByteBlocks( Field.RESERVED_LOW.getByteIndex(), (byte) 0 );	
+		setData( Field.RESERVED_LOW.getByteIndex(), (short) 0 );	
 		
 	}
 	
@@ -63,15 +63,15 @@ public class UrpPacket {
 	
 	// java is big endian, hence the reversal of byte order from spec
 	public short getOperator() {
-		return getByteBlocksInShort( Field.OPERATOR_LOW.getByteIndex() );
+		return getDataShort( Field.OPERATOR_LOW.getByteIndex() );
 	}
 	
 	void setOperator(short operator) {
-		setByteBlocks(Field.OPERATOR_LOW.getByteIndex(), operator);
+		setData(Field.OPERATOR_LOW.getByteIndex(), operator);
 	}
 	
 	public short getLength() {
-		return getByteBlocksInShort( Field.PL_LENGTH_LOW.getByteIndex() );
+		return getDataShort( Field.PL_LENGTH_LOW.getByteIndex() );
 	}
 	
 	public String getLengthInHex() {
@@ -80,12 +80,58 @@ public class UrpPacket {
 	
 	private void updateLength() {
 		short plLength = (short)( ( data.size() / 8 ) + 1 );
-		setByteBlocks( Field.PL_LENGTH_LOW.getByteIndex(), plLength );
+		setData( Field.PL_LENGTH_LOW.getByteIndex(), plLength );
 	}
 	
 	public List<Byte> getData() {
 		return Collections.unmodifiableList(data);
 	}	
+	
+	public byte getData(int index) {
+		return data.get(index);
+	}
+	
+	/**
+	 * Get 2 byte blocks into 1 short from an index
+	 * @param index
+	 * @return short the combined bytes of index and index+1 from little endian to big endian order
+	 */
+	public short getDataShort(int index) {
+		return (short) ( ( data.get( index + 1 ) << 8 ) | 
+				data.get( index ) );		
+	}	
+	
+	public void setData(int index, byte data) {
+		this.data.set( index, data );
+	}	
+	
+	/**
+	 * Save short in byte array list from index to index + 1
+	 * @param index
+	 * @param data
+	 */
+	public void setData(int index, short data) {		
+		this.data.set( index, ( (byte) ( data & 0x00ff ) ) );
+		this.data.set( index + 1, ( (byte) ( ( data & 0xff00 ) >>> 8 ) ) );
+	}
+	
+	public void setData(int index, int data) {
+		this.data.set( index, ( (byte) ( data & 0x000000ff ) ) );
+		this.data.set( index + 1, ( (byte) ( ( data & 0x0000ff00 ) >>> 8 ) ) );
+		this.data.set( index + 2, ( (byte) ( ( data & 0x00ff0000 ) >>> 16 ) ) );
+		this.data.set( index + 3, ( (byte) ( ( data & 0xff000000 ) >>> 24 ) ) );
+	}
+	
+	public void setData(int index, long data) {
+		setData(index, ( (int) (data & 0x00000000ffffffffL) ) );
+		setData(index + 4, ( (int) ( (data & 0xffffffff00000000L) >>> 32 ) ) );
+	}
+	
+	public void setData128(int index, long low, long high) {
+		setData(index, low);
+		setData(index + 8, high);
+	}	
+	
 	
 	/**
 	 * add new byte to the collection, each adding will result in update of the packet length field
@@ -123,8 +169,8 @@ public class UrpPacket {
 	}
 	
 	public int addLong(long data) {
-		int head = addInt( (int) (data & 0x0000ffff ) );
-		addInt( (int) ( (data & 0x0000ffff ) >>> 32 ) );
+		int head = addInt( (int) (data & 0x00000000ffffffffL ) );
+		addInt( (int) ( (data & 0xffffffff00000000L ) >>> 32 ) );
 		return head;
 	}
 	
@@ -132,40 +178,6 @@ public class UrpPacket {
 		int head = addLong(low);
 		addLong(high);
 		return head;		
-	}
-	
-	public void updateData(int index, byte data) {
-		this.data.set( index, data );
-	}	
-	
-	public void pack() {
-		// TODO remove this?
-		
-		// allow the subclass obj to pack their data
-		packParameter();				
-	}
-	
-	// Rather than declaring as abstract the UrpPacket can also be used solely
-	void packParameter() {}
-	
-	/**
-	 * Get 2 byte blocks into 1 short from an index
-	 * @param index
-	 * @return short the combined bytes of index and index+1 from little endian to big endian order
-	 */
-	private short getByteBlocksInShort(int index) {
-		return (short) ( ( data.get( index + 1 ) << 8 ) | 
-				data.get( index ) );		
-	}
-	
-	/**
-	 * Helper function to save short in byte array list from index to index + 1
-	 * @param lowIndex
-	 * @param data
-	 */
-	private void setByteBlocks(int index, short data) {
-		this.data.set( index, ( (byte) ( data & 0x00ff ) ) );
-		this.data.set( index + 1, ( (byte) ( ( data & 0xff00 ) >>> 8 ) ) );		
 	}
 	
 
