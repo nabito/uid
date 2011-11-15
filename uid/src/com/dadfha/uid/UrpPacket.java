@@ -3,10 +3,7 @@ package com.dadfha.uid;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class UrpPacket {
 	
@@ -18,7 +15,7 @@ public class UrpPacket {
 	public enum Field {
 		VER				( (short) 0 ),
 		SERIAL_NO		( (short) 1 ),
-		OPERATOR_LOW	( (short) 2 ), // Can be wither Command ID or Error Code depended on the type of packet
+		OPERATOR_LOW	( (short) 2 ), // Can be either Command ID or Error Code depended on the type of packet
 		OPERATOR_HIGH	( (short) 3 ),
 		RESERVED_LOW	( (short) 4 ),
 		RESERVED_HIGH	( (short) 5 ),
@@ -96,9 +93,10 @@ public class UrpPacket {
 	 * @return int index of currently add byte
 	 */
 	public int addByte(byte data) {
+		int head = this.data.size();
 		this.data.add(data);
 		updateLength();
-		return this.data.size() - 1;
+		return head;
 	}
 	
 	/**
@@ -107,10 +105,33 @@ public class UrpPacket {
 	 * @return int index of currently add short
 	 */
 	public int addShort(short data) {
+		int head = this.data.size();
 		this.data.add( (byte) (data & 0x00ff) );
 		this.data.add( (byte) ( (data & 0xff00) >>> 8 ) );
 		updateLength();
-		return this.data.size() - 2;
+		return head;
+	}
+	
+	public int addInt(int data) {
+		int head = this.data.size();
+		this.data.add( (byte) (data & 0x000000ff) );
+		this.data.add( (byte) ( (data & 0x0000ff00) >>> 8 ) );
+		this.data.add( (byte) ( (data & 0x00ff0000) >>> 16 ) );
+		this.data.add( (byte) ( (data & 0xff000000) >>> 24 ) );
+		updateLength();
+		return head;
+	}
+	
+	public int addLong(long data) {
+		int head = addInt( (int) (data & 0x0000ffff ) );
+		addInt( (int) ( (data & 0x0000ffff ) >>> 32 ) );
+		return head;
+	}
+	
+	public int add128(long low, long high) {
+		int head = addLong(low);
+		addLong(high);
+		return head;		
 	}
 	
 	public void updateData(int index, byte data) {
