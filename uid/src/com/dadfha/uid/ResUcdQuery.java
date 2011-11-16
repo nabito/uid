@@ -47,7 +47,7 @@ public class ResUcdQuery extends UrpQuery {
 		UIDC_ATTR_RS		( (short) 0x0001 ),
 		UIDC_ATTR_SS		( (short) 0x0002 ),
 		UIDC_ATTR_SIGS		( (short) 0x0003 ),
-		UID_USER			( (short) 0x0004 );
+		UID_USER			( (short) 0x00ff );
 		
 		private short code;
 		private static Map<Short, QueryAttribute> table = new HashMap<Short, QueryAttribute>();
@@ -71,7 +71,7 @@ public class ResUcdQuery extends UrpQuery {
 		}
 	}	
 	
-	public enum ResUcdField {
+	public enum ResUcdQueryField {
 		T				( (short) 8 ),
 		RESERVED		( (short) 12 ),
 		QUERY_MODE		( (short) 16 ),
@@ -82,7 +82,7 @@ public class ResUcdQuery extends UrpQuery {
 		
 		private short byteIndex;
 		
-		private ResUcdField(short index) {
+		private ResUcdQueryField(short index) {
 			byteIndex = index;
 		}
 		
@@ -103,12 +103,12 @@ public class ResUcdQuery extends UrpQuery {
 		addShort(ucodeType);
 		addShort(ucodeLength);
 		
-		assert addInt(t) == ResUcdField.T.getByteIndex();
-		assert addInt(0) == ResUcdField.RESERVED.getByteIndex();		
-		assert addShort(queryMode.getCode()) == ResUcdField.QUERY_MODE.getByteIndex();
-		assert addShort(queryAttribute.getCode()) == ResUcdField.QUERY_ATTRIBUTE.getByteIndex();
-		assert addShort(ucodeType) == ResUcdField.UCODE_TYPE.getByteIndex();
-		assert addShort(ucodeLength) == ResUcdField.UCODE_LENGTH.getByteIndex();		
+		assert addInt(t) == ResUcdQueryField.T.getByteIndex();
+		assert addInt(0) == ResUcdQueryField.RESERVED.getByteIndex();		
+		assert addShort(queryMode.getCode()) == ResUcdQueryField.QUERY_MODE.getByteIndex();
+		assert addShort(queryAttribute.getCode()) == ResUcdQueryField.QUERY_ATTRIBUTE.getByteIndex();
+		assert addShort(ucodeType) == ResUcdQueryField.UCODE_TYPE.getByteIndex();
+		assert addShort(ucodeLength) == ResUcdQueryField.UCODE_LENGTH.getByteIndex();		
 	}
 	
 	/**
@@ -116,7 +116,7 @@ public class ResUcdQuery extends UrpQuery {
 	 * @return int the time in seconds since 0:00AM, Jan. 1,2000 GMT
 	 */
 	public int getT() {
-		return getData(ResUcdField.T.getByteIndex());
+		return getData(ResUcdQueryField.T.getByteIndex());
 	}	
 	
 	/**
@@ -124,7 +124,7 @@ public class ResUcdQuery extends UrpQuery {
 	 * @param time the time in seconds since 0:00AM, Jan. 1,2000 GMT
 	 */
 	public void setT(int time) {
-		setData(ResUcdField.T.getByteIndex(), time);
+		setData(ResUcdQueryField.T.getByteIndex(), time);
 	}
 	
 	/**
@@ -132,7 +132,7 @@ public class ResUcdQuery extends UrpQuery {
 	 * @return QueryMode
 	 */
 	public QueryMode getQueryMode() {
-		short mode = getDataShort(ResUcdField.QUERY_MODE.getByteIndex());
+		short mode = getDataShort(ResUcdQueryField.QUERY_MODE.getByteIndex());
 		return QueryMode.valueOf(mode); 
 	}
 	
@@ -141,7 +141,7 @@ public class ResUcdQuery extends UrpQuery {
 	 * @param mode
 	 */
 	public void setQueryMode(QueryMode mode) {
-		setData(ResUcdField.QUERY_MODE.getByteIndex(), mode.getCode());
+		setData(ResUcdQueryField.QUERY_MODE.getByteIndex(), mode.getCode());
 	}
 	
 	/**
@@ -149,30 +149,30 @@ public class ResUcdQuery extends UrpQuery {
 	 * @return QueryAttribute
 	 */
 	public QueryAttribute getQueryAttribute() {
-		short attribute = getDataShort(ResUcdField.QUERY_ATTRIBUTE.getByteIndex());
+		short attribute = getDataShort(ResUcdQueryField.QUERY_ATTRIBUTE.getByteIndex());
 		return QueryAttribute.valueOf(attribute);
 	}
 	
 	public UcodeType getUcodeType() {
-		short type = getData(ResUcdField.UCODE_TYPE.getByteIndex());
+		short type = getData(ResUcdQueryField.UCODE_TYPE.getByteIndex());
 		return UcodeType.valueOf(type);		
 	}
 	
 	public void setUcodeType(UcodeType type) {
-		setData(ResUcdField.UCODE_TYPE.getByteIndex(), type.getCode());
+		setData(ResUcdQueryField.UCODE_TYPE.getByteIndex(), type.getCode());
 	}
 	
 	public short getUcodeLength() {
-		return getData(ResUcdField.UCODE_LENGTH.getByteIndex());
+		return getData(ResUcdQueryField.UCODE_LENGTH.getByteIndex());
 	}
 	
 	/**
 	 * Total length of a queryucode/querymask (byte)
 	 */
 	public void updateUcodeLength() {
-		short length = (short) ( (getLength() * 8 ) - ResUcdField.QUERY_UCODE.getByteIndex() );
+		short length = (short) ( (getLength() * 8 ) - ResUcdQueryField.QUERY_UCODE.getByteIndex() );
 		assert length >= 0 : length;		
-		setData(ResUcdField.UCODE_LENGTH.getByteIndex(), length);
+		setData(ResUcdQueryField.UCODE_LENGTH.getByteIndex(), length);
 	}
 	
 	/**
@@ -196,6 +196,7 @@ public class ResUcdQuery extends UrpQuery {
 	public void addQuery(long ucode, long mask) {
 		queryUcode.add(ucode);
 		queryMask.add(mask);
+		updateLength();
 	}
 	
 	/**
@@ -209,6 +210,13 @@ public class ResUcdQuery extends UrpQuery {
 	
 	public void setQueryMask(int index, long data) {
 		queryMask.set(index, data);
+	}
+	
+	short getExtLength() {		
+		// FIXME if the value exceed Short.MAX_VALUE, 32767, then it won't fit in short
+		// because all java type are signed, we need to change to bigger type or define our own unsigned class
+		// or to beware about how we should expect the value in everyline of code (sounds best? should sum a note)
+		return (short) queryUcode.size();
 	}
 	
 }

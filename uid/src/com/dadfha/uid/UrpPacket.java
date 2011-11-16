@@ -81,10 +81,24 @@ public class UrpPacket {
 	public String getLengthInHex() {
 		return Integer.toHexString( getLength() );	 
 	}
-	
-	private void updateLength() {
+
+	/**
+	 * Update the length field to reflect actual size of the packet in Octal-Byte unit (8 bytes).
+	 * The method is left with default modifier for its subclass to call 
+	 * when need to update its own length of data structure
+	 */
+	final void updateLength() {
 		short plLength = (short)( data.size() / 8 );
+		plLength = (short) ( plLength + getExtLength() );
 		setData( Field.PL_LENGTH_LOW.getByteIndex(), plLength );
+	}
+	
+	/**
+	 * This method allow subclass to add length of its own data storage for other fields
+	 * @return short the added length
+	 */
+	short getExtLength() {
+		return 0;
 	}
 	
 	public List<Byte> getData() {

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class UrpReceive extends UrpPacket {
+public class UrpRecieve extends UrpPacket {
 	
 	public enum Error {
 		E_UIDC_OK		( (short) 0x0000 ),
@@ -35,7 +35,7 @@ public class UrpReceive extends UrpPacket {
 		}
 	}	
 	
-	public UrpReceive() {
+	public UrpRecieve() {
 		
 	}
 	

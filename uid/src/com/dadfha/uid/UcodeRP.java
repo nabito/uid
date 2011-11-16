@@ -4,6 +4,11 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Note: This has potential to become generic packet construction classes
+ * @author Wirawit
+ *
+ */
 public class UcodeRP {
 	
 	public enum UcodeType {
