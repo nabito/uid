@@ -70,6 +70,10 @@ public class UrpPacket {
 		setData(Field.OPERATOR_LOW.getByteIndex(), operator);
 	}
 	
+	/**
+	 * Total length of ucodeRP packet in 8 octet (byte) blocks
+	 * @return short the number of set(s) of 8 octet block(s)
+	 */
 	public short getLength() {
 		return getDataShort( Field.PL_LENGTH_LOW.getByteIndex() );
 	}
@@ -79,7 +83,7 @@ public class UrpPacket {
 	}
 	
 	private void updateLength() {
-		short plLength = (short)( ( data.size() / 8 ) + 1 );
+		short plLength = (short)( data.size() / 8 );
 		setData( Field.PL_LENGTH_LOW.getByteIndex(), plLength );
 	}
 	

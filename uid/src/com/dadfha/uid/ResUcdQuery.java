@@ -1,9 +1,18 @@
 package com.dadfha.uid;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.dadfha.uid.UcodeRP.UcodeType;
+
+/**
+ * Class representing packet structure for the res_ucd query command
+ * @author Wirawit
+ *
+ */
 public class ResUcdQuery extends UrpQuery {
 
 	public enum QueryMode {
@@ -28,8 +37,8 @@ public class ResUcdQuery extends UrpQuery {
 			return code;
 		}		
 		
-		public static QueryMode valueOf(short mode) {
-			return table.get(mode);
+		public static QueryMode valueOf(short code) {
+			return table.get(code);
 		}
 	}
 	
@@ -68,7 +77,8 @@ public class ResUcdQuery extends UrpQuery {
 		QUERY_MODE		( (short) 16 ),
 		QUERY_ATTRIBUTE	( (short) 18 ),
 		UCODE_TYPE		( (short) 20 ),
-		UCODE_LENGTH	( (short) 22 );
+		UCODE_LENGTH	( (short) 22 ),
+		QUERY_UCODE		( (short) 24 ); // the first byte index of Query Ucode Field
 		
 		private short byteIndex;
 		
@@ -80,6 +90,9 @@ public class ResUcdQuery extends UrpQuery {
 			return byteIndex;
 		}
 	}
+	
+	private List<Long> queryUcode = new ArrayList<Long>();
+	private List<Long> queryMask = new ArrayList<Long>();
 	
 	public ResUcdQuery(int t, QueryMode queryMode, QueryAttribute queryAttribute, short ucodeType, short ucodeLength) {
 		// init all fields
@@ -138,6 +151,64 @@ public class ResUcdQuery extends UrpQuery {
 	public QueryAttribute getQueryAttribute() {
 		short attribute = getDataShort(ResUcdField.QUERY_ATTRIBUTE.getByteIndex());
 		return QueryAttribute.valueOf(attribute);
+	}
+	
+	public UcodeType getUcodeType() {
+		short type = getData(ResUcdField.UCODE_TYPE.getByteIndex());
+		return UcodeType.valueOf(type);		
+	}
+	
+	public void setUcodeType(UcodeType type) {
+		setData(ResUcdField.UCODE_TYPE.getByteIndex(), type.getCode());
+	}
+	
+	public short getUcodeLength() {
+		return getData(ResUcdField.UCODE_LENGTH.getByteIndex());
+	}
+	
+	/**
+	 * Total length of a queryucode/querymask (byte)
+	 */
+	public void updateUcodeLength() {
+		short length = (short) ( (getLength() * 8 ) - ResUcdField.QUERY_UCODE.getByteIndex() );
+		assert length >= 0 : length;		
+		setData(ResUcdField.UCODE_LENGTH.getByteIndex(), length);
+	}
+	
+	/**
+	 * Get a query ucode
+	 * @param index added sequence of ucode  
+	 * @return long the query ucode
+	 */
+	public long getQueryUcode(int index) {
+		return queryUcode.get(index);
+	}
+	
+	public void setQueryUcode(int index, long data) {
+		queryUcode.set(index, data);
+	}
+	
+	/**
+	 * Add query ucode and its mask bits
+	 * @param ucode
+	 * @param mask
+	 */
+	public void addQuery(long ucode, long mask) {
+		queryUcode.add(ucode);
+		queryMask.add(mask);
+	}
+	
+	/**
+	 * Get a query mask
+	 * @param index added sequence of mask
+	 * @return long the query mask
+	 */
+	public long getQueryMask(int index) {
+		return queryMask.get(index);
+	}
+	
+	public void setQueryMask(int index, long data) {
+		queryMask.set(index, data);
 	}
 	
 }
