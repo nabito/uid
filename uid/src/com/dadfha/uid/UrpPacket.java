@@ -88,7 +88,7 @@ public class UrpPacket {
 	 * when need to update its own length of data structure
 	 */
 	final void updateLength() {
-		short plLength = (short)( data.size() / 8 );
+		short plLength = (short)( data.size() / 8 ); // ??? considering change this to shift right 3 times? 
 		plLength = (short) ( plLength + getExtLength() );
 		setData( Field.PL_LENGTH_LOW.getByteIndex(), plLength );
 	}

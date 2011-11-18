@@ -1,6 +1,7 @@
 package com.dadfha.uid;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -176,46 +177,66 @@ public class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
-	 * Get a query ucode
+	 * Get a query 128-bit ucode
 	 * @param index added sequence of ucode  
-	 * @return long the query ucode
+	 * @return long[] the query ucode in little endian order
+	 * @throws Exception 
 	 */
-	public long getQueryUcode(int index) {
-		return queryUcode.get(index);
+	public long[] getQueryUcode(int index) throws Exception {
+		if(index % 2 != 0) throw new Exception("the index value of ucode cannot be odd number");
+		long[] l = { queryUcode.get(index), queryUcode.get(index + 8) };
+		return l;
 	}
 	
-	public void setQueryUcode(int index, long data) {
-		queryUcode.set(index, data);
+	public void setQueryUcode(int index, long dataLow, long dataHigh) throws Exception {
+		if(index % 2 != 0) throw new Exception("the index value of ucode cannot be odd number");
+		queryUcode.set(index, dataLow);
+		queryUcode.set(index + 8, dataHigh);
 	}
 	
 	/**
 	 * Add query ucode and its mask bits
-	 * @param ucode
-	 * @param mask
+	 * @param ucodeLow
+	 * @param ucodeHigh
+	 * @param maskLow
+	 * @param maskHigh
+	 * @return int index of the added ucode for later reference
 	 */
-	public void addQuery(long ucode, long mask) {
-		queryUcode.add(ucode);
-		queryMask.add(mask);
+	public int addQuery(long ucodeLow, long ucodeHigh, long maskLow, long maskHigh) {
+		int index = queryUcode.size();
+		queryUcode.add(ucodeLow);
+		queryUcode.add(ucodeHigh);
+		queryMask.add(maskLow);
+		queryMask.add(maskHigh);
 		updateLength();
+		return index;
 	}
 	
 	/**
 	 * Get a query mask
-	 * @param index added sequence of mask
-	 * @return long the query mask
+	 * @param index added sequence of ucode NOT of the mask
+	 * @return long[] the query mask in little Endian order
+	 * @throws Exception 
 	 */
-	public long getQueryMask(int index) {
-		return queryMask.get(index);
+	public long[] getQueryMask(int index) throws Exception {
+		if(index % 2 != 0) throw new Exception("the index value of ucode cannot be odd number");
+		index = index + queryUcode.size();
+		long[] l = { queryMask.get(index), queryMask.get(index + 8) };
+		return l;
 	}
 	
-	public void setQueryMask(int index, long data) {
-		queryMask.set(index, data);
+	public void setQueryMask(int index, long dataLow, long dataHigh) throws Exception {
+		if(index % 2 != 0) throw new Exception("the index value of ucode cannot be odd number");
+		index = index + queryUcode.size();
+		queryMask.set(index, dataLow);
+		queryMask.set(index + 8, dataHigh);
 	}
 	
 	short getExtLength() {		
-		// FIXME if the value exceed Short.MAX_VALUE, 32767, then it won't fit in short
+		// TODO if the value exceed Short.MAX_VALUE, 32767, then it won't fit in short
 		// because all java type are signed, we need to change to bigger type or define our own unsigned class
 		// or to beware about how we should expect the value in everyline of code (sounds best? should sum a note)
+		// !!!need to understand behavior of (short) cast from int bigger than short if still preserved bit order
 		return (short) queryUcode.size();
 	}
 	
