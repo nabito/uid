@@ -1,7 +1,6 @@
 package com.dadfha.uid;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -14,7 +13,7 @@ import com.dadfha.uid.UcodeRP.UcodeType;
  * @author Wirawit
  *
  */
-public class ResUcdQuery extends UrpQuery {
+public final class ResUcdQuery extends UrpQuery {
 
 	public enum QueryMode {
 		UIDC_RSMODE_RESOLUTION	( (short) 0x0000 ),
@@ -172,6 +171,10 @@ public class ResUcdQuery extends UrpQuery {
 	 */
 	public void updateUcodeLength() {
 		short length = (short) ( (getLength() * 8 ) - ResUcdQueryField.QUERY_UCODE.getByteIndex() );
+		// ??? the QUERY_UCODE constant may not necessary as below code may produce the same result
+		// if so, later remove the original code and constant instead
+		short altLength = (short) (queryUcode.size() * 2);
+		assert altLength == length : "remove the alternative code";
 		assert length >= 0 : length;		
 		setData(ResUcdQueryField.UCODE_LENGTH.getByteIndex(), length);
 	}
@@ -225,6 +228,13 @@ public class ResUcdQuery extends UrpQuery {
 		return l;
 	}
 	
+	/**
+	 * Update a query mask associated with a ucode
+	 * @param index added sequence of ucode NOT of the mask
+	 * @param dataLow
+	 * @param dataHigh
+	 * @throws Exception
+	 */
 	public void setQueryMask(int index, long dataLow, long dataHigh) throws Exception {
 		if(index % 2 != 0) throw new Exception("the index value of ucode cannot be odd number");
 		index = index + queryUcode.size();
@@ -237,7 +247,9 @@ public class ResUcdQuery extends UrpQuery {
 		// because all java type are signed, we need to change to bigger type or define our own unsigned class
 		// or to beware about how we should expect the value in everyline of code (sounds best? should sum a note)
 		// !!!need to understand behavior of (short) cast from int bigger than short if still preserved bit order
-		return (short) queryUcode.size();
+		return (short) ( queryUcode.size() * 2 );
 	}
+	
+	// TODO override subPack()
 	
 }

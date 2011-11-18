@@ -33,7 +33,7 @@ public class UrpPacket {
 		}
 	}
 	
-	private List<Byte> data;
+	private final List<Byte> data;
 	
 	public UrpPacket() {
 		
@@ -49,24 +49,24 @@ public class UrpPacket {
 		
 	}
 	
-	public byte getVersion() {
+	public final byte getVersion() {
 		return data.get( Field.VER.getByteIndex() );
 	}
 	
-	public byte getSerialNumber() {
+	public final byte getSerialNumber() {
 		return data.get( Field.SERIAL_NO.getByteIndex() );
 	}
 	
-	public void setSerialNumber(byte serialNumber) {
+	public final void setSerialNumber(byte serialNumber) {
 		data.set(Field.SERIAL_NO.getByteIndex(), serialNumber );
 	}
 	
 	// java is big endian, hence the reversal of byte order from spec
-	public short getOperator() {
+	public final short getOperator() {
 		return getDataShort( Field.OPERATOR_LOW.getByteIndex() );
 	}
 	
-	void setOperator(short operator) {
+	public final void setOperator(short operator) {
 		setData(Field.OPERATOR_LOW.getByteIndex(), operator);
 	}
 	
@@ -74,11 +74,11 @@ public class UrpPacket {
 	 * Total length of ucodeRP packet in 8 octet (byte) blocks
 	 * @return short the number of set(s) of 8 octet block(s)
 	 */
-	public short getLength() {
+	public final short getLength() {
 		return getDataShort( Field.PL_LENGTH_LOW.getByteIndex() );
 	}
 	
-	public String getLengthInHex() {
+	public final String getLengthInHex() {
 		return Integer.toHexString( getLength() );	 
 	}
 
@@ -88,24 +88,25 @@ public class UrpPacket {
 	 * when need to update its own length of data structure
 	 */
 	final void updateLength() {
-		short plLength = (short)( data.size() / 8 ); // ??? considering change this to shift right 3 times? 
-		plLength = (short) ( plLength + getExtLength() );
+		short plLength = (short)( data.size() / 8 ); // ??? considering change this to shift right 3 times? (unsigned対策)
+		plLength = (short) ( plLength + getSubLength() );
 		setData( Field.PL_LENGTH_LOW.getByteIndex(), plLength );
 	}
 	
 	/**
 	 * This method allow subclass to add length of its own data storage for other fields
+	 * The length must be in Octal-Byte unit (8 bytes).
 	 * @return short the added length
 	 */
-	short getExtLength() {
+	short getSubLength() {		
 		return 0;
 	}
 	
-	public List<Byte> getData() {
+	public final List<Byte> getData() {
 		return Collections.unmodifiableList(data);
 	}	
 	
-	public byte getData(int index) {
+	public final byte getData(int index) {
 		return data.get(index);
 	}
 	
@@ -114,12 +115,12 @@ public class UrpPacket {
 	 * @param index
 	 * @return short the combined bytes of index and index+1 from little endian to big endian order
 	 */
-	public short getDataShort(int index) {
+	public final short getDataShort(int index) {
 		return (short) ( ( data.get( index + 1 ) << 8 ) | 
 				data.get( index ) );		
 	}	
 	
-	public void setData(int index, byte data) {
+	public final void setData(int index, byte data) {
 		this.data.set( index, data );
 	}	
 	
@@ -128,24 +129,24 @@ public class UrpPacket {
 	 * @param index
 	 * @param data
 	 */
-	public void setData(int index, short data) {		
+	public final void setData(int index, short data) {		
 		this.data.set( index, ( (byte) ( data & 0x00ff ) ) );
 		this.data.set( index + 1, ( (byte) ( ( data & 0xff00 ) >>> 8 ) ) );
 	}
 	
-	public void setData(int index, int data) {
+	public final void setData(int index, int data) {
 		this.data.set( index, ( (byte) ( data & 0x000000ff ) ) );
 		this.data.set( index + 1, ( (byte) ( ( data & 0x0000ff00 ) >>> 8 ) ) );
 		this.data.set( index + 2, ( (byte) ( ( data & 0x00ff0000 ) >>> 16 ) ) );
 		this.data.set( index + 3, ( (byte) ( ( data & 0xff000000 ) >>> 24 ) ) );
 	}
 	
-	public void setData(int index, long data) {
+	public final void setData(int index, long data) {
 		setData(index, ( (int) (data & 0x00000000ffffffffL) ) );
 		setData(index + 4, ( (int) ( (data & 0xffffffff00000000L) >>> 32 ) ) );
 	}
 	
-	public void setData128(int index, long low, long high) {
+	public final void setData128(int index, long low, long high) {
 		setData(index, low);
 		setData(index + 8, high);
 	}	
@@ -156,7 +157,7 @@ public class UrpPacket {
 	 * @param data
 	 * @return int index of currently add byte
 	 */
-	public int addByte(byte data) {
+	public final int addByte(byte data) {
 		int head = this.data.size();
 		this.data.add(data);
 		updateLength();
@@ -168,7 +169,7 @@ public class UrpPacket {
 	 * @param data
 	 * @return int index of currently add short
 	 */
-	public int addShort(short data) {
+	public final int addShort(short data) {
 		int head = this.data.size();
 		this.data.add( (byte) (data & 0x00ff) );
 		this.data.add( (byte) ( (data & 0xff00) >>> 8 ) );
@@ -176,7 +177,7 @@ public class UrpPacket {
 		return head;
 	}
 	
-	public int addInt(int data) {
+	public final int addInt(int data) {
 		int head = this.data.size();
 		this.data.add( (byte) (data & 0x000000ff) );
 		this.data.add( (byte) ( (data & 0x0000ff00) >>> 8 ) );
@@ -186,17 +187,34 @@ public class UrpPacket {
 		return head;
 	}
 	
-	public int addLong(long data) {
+	public final int addLong(long data) {
 		int head = addInt( (int) (data & 0x00000000ffffffffL ) );
 		addInt( (int) ( (data & 0xffffffff00000000L ) >>> 32 ) );
 		return head;
 	}
 	
-	public int add128(long low, long high) {
+	public final int add128(long low, long high) {
 		int head = addLong(low);
 		addLong(high);
 		return head;		
 	}
 	
+	/**
+	 * Pack data in byte array form
+	 * @return byte[]
+	 */
+	public final byte[] pack() {
+		// TODO complete the pack of main UrpPacket
+		// Merge array with subPack();
+		return null;
+	}
+	
+	/**
+	 * Method for subclass to override and provide all of its fields data in order based on spec
+	 * @return byte[]
+	 */
+	byte[] subPack() {
+		return null;
+	}
 
 }

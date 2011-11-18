@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class ResUcdRecieve extends UrpRecieve {
+public final class ResUcdRecieve extends UrpRecieve {
 	
 	public enum ResolveMode {
 		UIDC_RSMODE_RESOLUTION	( (short) 0x0000 ),
@@ -121,6 +121,7 @@ public class ResUcdRecieve extends UrpRecieve {
 	}
 	
 	private List<Long> data = new ArrayList<Long>(); 
+	private List<Long> returnMask = new ArrayList<Long>();
 	
 	public ResUcdRecieve(int ttl, short dataVersion, ResolveMode mode, DataAttribute attribute, DataType type, short dataLength) {
 		addInt(ttl);
@@ -131,7 +132,13 @@ public class ResUcdRecieve extends UrpRecieve {
 		addShort(type.getCode());
 		addShort(dataLength);
 		
-		// TODO assert 
+		assert addInt(ttl) == ResUcdRecieveField.TTL.getByteIndex();
+		assert addShort( (short) 0 ) == ResUcdRecieveField.RESERVED.getByteIndex();
+		assert addShort(dataVersion) == ResUcdRecieveField.DATA_VERSION.getByteIndex();
+		assert addShort(mode.getCode()) == ResUcdRecieveField.RESOLVE_MODE.getByteIndex();
+		assert addShort(attribute.getCode()) == ResUcdRecieveField.DATA_ATTRIBUTE.getByteIndex();
+		assert addShort(type.getCode()) == ResUcdRecieveField.DATA_TYPE.getByteIndex();
+		assert addShort(dataLength) == ResUcdRecieveField.DATA_LENGTH.getByteIndex();
 	}
 	
 	
@@ -178,11 +185,50 @@ public class ResUcdRecieve extends UrpRecieve {
 		setData(ResUcdRecieveField.DATA_TYPE.getByteIndex(), type.getCode());
 	}
 	
-	public int getDataLength() {
-		return data.size();
+	public short getDataLength() {
+		// ??? confirm whether "bits" value > Short.MAX but < 255 can be correctly stored after conversion
+		return (short) ( data.size() * 8 );
 	}
 	
-	// TODO addData()
+	public long getResUcdData(int index) {
+		return data.get(index);
+	}
 	
+	public void setResUcdData(int index, long data) {
+		this.data.set(index, data);
+	}
+	
+	public int addResUcdData(long data) {
+		int index = this.data.size();
+		this.data.add(data);
+		updateLength();
+		return index;
+	}	
+	
+	public short getMaskLength() {
+		return (short) ( returnMask.size() * 8 );
+	}
+	
+	public long getMask(int index) {
+		return returnMask.get(index);
+	}
+	
+	public void setMask(int index, long data) {
+		returnMask.set(index, data);
+	}
+	
+	public int addMask(long mask) {
+		int index = returnMask.size();
+		returnMask.add(mask);
+		updateLength();
+		return index;		
+	}
+	
+	short getExtLength() {
+		// +1 is from the row of reserved bits and masklength field
+		return (short) ( data.size() + 1 + returnMask.size() );
+	}
+	
+	// TODO override subPack()
 	
 }
