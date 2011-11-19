@@ -1,11 +1,14 @@
 package com.dadfha.uid;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.dadfha.Utils;
 import com.dadfha.uid.UcodeRP.UcodeType;
 
 /**
@@ -250,6 +253,17 @@ public final class ResUcdQuery extends UrpQuery {
 		return (short) ( queryUcode.size() * 2 );
 	}
 	
-	// TODO override subPack()
+	/**
+	 * Concatenate query ucode and query mask data respectively into ByteArray
+	 */
+	Byte[] subPack() {
+		Long[] qu = queryUcode.toArray(new Long[0]);
+		Long[] qm = queryMask.toArray(new Long[0]);
+		// ??? Are there any more effective way of converting Long[] to Byte[] ? 
+		// May be directly pack to Network output stream/buffer/channel may produce less overhead
+		// Also keep everything in byte[] would guarantee re-arrange of data into little endian!
+		Byte[] byteArray = Utils.concat( Utils.toByteArray(qu),  Utils.toByteArray(qm) );
+		return byteArray;
+	}
 	
 }

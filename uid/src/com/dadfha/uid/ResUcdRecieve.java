@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.dadfha.Utils;
+
 
 public final class ResUcdRecieve extends UrpRecieve {
 	
@@ -187,6 +189,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 	
 	public short getDataLength() {
 		// ??? confirm whether "bits" value > Short.MAX but < 255 can be correctly stored after conversion
+		// FIXME the order is in Big Endian!!!! Must be Little! Need check for every method!
 		return (short) ( data.size() * 8 );
 	}
 	
@@ -229,6 +232,13 @@ public final class ResUcdRecieve extends UrpRecieve {
 		return (short) ( data.size() + 1 + returnMask.size() );
 	}
 	
-	// TODO override subPack()
+	Byte[] subPack() {
+		Long[] d = data.toArray(new Long[0]);
+		Byte[] maskLengthRow = { 0, 0, 0, 0, 0, 0, (byte) ( ( getMaskLength() & 0xff00 ) >>> 8 ), (byte) ( getMaskLength() & 0x00ff ) };
+		Long[] rm = returnMask.toArray(new Long[0]);
+		// ??? Are there any more effective way of converting Long[] to Byte[] ?
+		Byte[] byteArray = Utils.concat( Utils.toByteArray(d), Utils.toByteArray(rm) );
+		return byteArray;
+	}
 	
 }

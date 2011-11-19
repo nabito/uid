@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.dadfha.Utils;
+
 public class UrpPacket {
 	
 	/**
@@ -200,20 +202,20 @@ public class UrpPacket {
 	}
 	
 	/**
-	 * Pack data in byte array form
+	 * Pack data in Byte array form by extract Byte array from data list 
+	 * and merge with Byte array from subclass (if any)
 	 * @return byte[]
 	 */
-	public final byte[] pack() {
-		// TODO complete the pack of main UrpPacket
-		// Merge array with subPack();
-		return null;
+	public final Byte[] pack() {		 
+		Byte[] byteArray = Utils.concat(data.toArray(new Byte[0]), subPack());
+		return byteArray;
 	}
 	
 	/**
 	 * Method for subclass to override and provide all of its fields data in order based on spec
 	 * @return byte[]
 	 */
-	byte[] subPack() {
+	Byte[] subPack() {
 		return null;
 	}
 
