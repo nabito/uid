@@ -120,6 +120,7 @@ public class UrpPacket {
 	 * Update the Length field to reflect actual size of the packet in Octal-Byte unit (8 bytes).
 	 * The method is left with default modifier for its subclass to call 
 	 * when need to update its own length of data structure
+	 * @throws RuntimeException when the length data is bigger than field size
 	 */
 	final void updateLength() {
 		int length = ( data.size() / 8 ) + getSubLength();

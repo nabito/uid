@@ -77,8 +77,7 @@ public final class ResUcdQuery extends UrpQuery {
 		QUERY_MODE		( (short) 16 ),
 		QUERY_ATTRIBUTE	( (short) 18 ),
 		UCODE_TYPE		( (short) 20 ),
-		UCODE_LENGTH	( (short) 22 ),
-		QUERY_UCODE		( (short) 24 ); // the first byte index of Query Ucode Field
+		UCODE_LENGTH	( (short) 22 );
 		
 		private short byteIndex;
 		
@@ -95,27 +94,29 @@ public final class ResUcdQuery extends UrpQuery {
 	private List<Long> queryMask = new ArrayList<Long>();
 	
 	public ResUcdQuery(int t, QueryMode queryMode, QueryAttribute queryAttribute, short ucodeType, short ucodeLength) {
-		// init all fields
-		addInt(t);
-		addInt(0);		
-		addShort(queryMode.getCode());
-		addShort(queryAttribute.getCode());
-		addShort(ucodeType);
-		addShort(ucodeLength);
+		int temp;
 		
-		assert addInt(t) == ResUcdQueryField.T.getByteIndex();
-		assert addInt(0) == ResUcdQueryField.RESERVED.getByteIndex();		
-		assert addShort(queryMode.getCode()) == ResUcdQueryField.QUERY_MODE.getByteIndex();
-		assert addShort(queryAttribute.getCode()) == ResUcdQueryField.QUERY_ATTRIBUTE.getByteIndex();
-		assert addShort(ucodeType) == ResUcdQueryField.UCODE_TYPE.getByteIndex();
-		assert addShort(ucodeLength) == ResUcdQueryField.UCODE_LENGTH.getByteIndex();		
+		// init all fields
+		temp = addInt(t);
+		assert temp == ResUcdQueryField.T.getByteIndex();
+		temp = addInt(0);
+		assert temp == ResUcdQueryField.RESERVED.getByteIndex();
+		temp = addShort(queryMode.getCode());
+		assert temp == ResUcdQueryField.QUERY_MODE.getByteIndex();
+		temp = addShort(queryAttribute.getCode());
+		assert temp == ResUcdQueryField.QUERY_ATTRIBUTE.getByteIndex();
+		temp = addShort(ucodeType);
+		assert temp == ResUcdQueryField.UCODE_TYPE.getByteIndex();
+		temp = addShort(ucodeLength);
+		assert temp == ResUcdQueryField.UCODE_LENGTH.getByteIndex();
+		
 	}
 	
 	/**
 	 * Get the time of command send time
 	 * @return int the time in seconds since 0:00AM, Jan. 1,2000 GMT
 	 */
-	public int getT() {
+	public final int getT() {
 		return getData(ResUcdQueryField.T.getByteIndex());
 	}	
 	
@@ -123,7 +124,7 @@ public final class ResUcdQuery extends UrpQuery {
 	 * Command send time
 	 * @param time the time in seconds since 0:00AM, Jan. 1,2000 GMT
 	 */
-	public void setT(int time) {
+	public final void setT(int time) {
 		setData(ResUcdQueryField.T.getByteIndex(), time);
 	}
 	
@@ -131,7 +132,7 @@ public final class ResUcdQuery extends UrpQuery {
 	 * Get search mode of the ucode resolution DB
 	 * @return QueryMode
 	 */
-	public QueryMode getQueryMode() {
+	public final QueryMode getQueryMode() {
 		short mode = getDataShort(ResUcdQueryField.QUERY_MODE.getByteIndex());
 		return QueryMode.valueOf(mode); 
 	}
@@ -140,78 +141,104 @@ public final class ResUcdQuery extends UrpQuery {
 	 * Set search mode of the ucode resolution DB
 	 * @param mode
 	 */
-	public void setQueryMode(QueryMode mode) {
+	public final void setQueryMode(QueryMode mode) {
 		setData(ResUcdQueryField.QUERY_MODE.getByteIndex(), mode.getCode());
 	}
 	
 	/**
-	 * Get DataAttribute to be retrieved
+	 * Get Data Attribute to be retrieved
 	 * @return QueryAttribute
 	 */
-	public QueryAttribute getQueryAttribute() {
+	public final QueryAttribute getQueryAttribute() {
 		short attribute = getDataShort(ResUcdQueryField.QUERY_ATTRIBUTE.getByteIndex());
 		return QueryAttribute.valueOf(attribute);
 	}
 	
-	public UcodeType getUcodeType() {
+	/**
+	 * Set Data Attribute to be retrieved
+	 * @param attribute
+	 */
+	public final void setQueryAttribute(QueryAttribute attribute) {
+		setData(ResUcdQueryField.QUERY_ATTRIBUTE.getByteIndex(), attribute.getCode());
+	}
+	
+	/**
+	 * Get Ucode type
+	 * @return UcodeType
+	 */
+	public final UcodeType getUcodeType() {
 		short type = getData(ResUcdQueryField.UCODE_TYPE.getByteIndex());
 		return UcodeType.valueOf(type);		
 	}
 	
-	public void setUcodeType(UcodeType type) {
+	/**
+	 * Set Ucode type
+	 * @param type
+	 */
+	public final void setUcodeType(UcodeType type) {
 		setData(ResUcdQueryField.UCODE_TYPE.getByteIndex(), type.getCode());
 	}
-	
+
+	/**
+	 * Get Ucode Length
+	 * @return short length of queryucode/querymask (byte)
+	 */
 	public short getUcodeLength() {
 		return getData(ResUcdQueryField.UCODE_LENGTH.getByteIndex());
 	}
 	
 	/**
-	 * Total length of a queryucode/querymask (byte)
+	 * Update total length of a queryucode/querymask (byte)
+	 * @throws RuntimeException when the length data is bigger than field size
 	 */
-	public void updateUcodeLength() {
-		short length = (short) ( (getLength() * 8 ) - ResUcdQueryField.QUERY_UCODE.getByteIndex() );
-		// ??? the QUERY_UCODE constant may not necessary as below code may produce the same result
-		// if so, later remove the original code and constant instead
-		short altLength = (short) (queryUcode.size() * 2);
-		assert altLength == length : "remove the alternative code";
-		assert length >= 0 : length;		
-		setData(ResUcdQueryField.UCODE_LENGTH.getByteIndex(), length);
+	private final void updateUcodeLength() {		
+		int length = ( queryUcode.size() * 2 );
+		if( length > Math.pow(2, Short.SIZE) ) throw new RuntimeException("The data length value exceed the size of length field");
+		short ucodeLength = (short) length;
+		setData(ResUcdQueryField.UCODE_LENGTH.getByteIndex(), ucodeLength);
 	}
 	
 	/**
-	 * Get a query 128-bit ucode
+	 * Get a 128-bit query ucode
 	 * @param index added sequence of ucode  
 	 * @return long[] the query ucode in little endian order
-	 * @throws Exception 
+	 * @throws Exception when the index of query ucode is odd number
 	 */
-	public long[] getQueryUcode(int index) throws Exception {
+	public final long[] getQueryUcode(int index) throws Exception {
 		if(index % 2 != 0) throw new Exception("the index value of ucode cannot be odd number");
-		long[] l = { queryUcode.get(index), queryUcode.get(index + 8) };
+		long[] l = { queryUcode.get(index), queryUcode.get(index + 1) };
 		return l;
 	}
 	
-	public void setQueryUcode(int index, long dataLow, long dataHigh) throws Exception {
+	/**
+	 * Update a 128-bit query ucode
+	 * @param index
+	 * @param dataLow lower 64-bit data of ucode
+	 * @param dataHigh higher 64-bit data of ucode
+	 * @throws Exception when the index of query ucode is odd number
+	 */
+	public final void setQueryUcode(int index, long dataLow, long dataHigh) throws Exception {
 		if(index % 2 != 0) throw new Exception("the index value of ucode cannot be odd number");
-		queryUcode.set(index, dataLow);
-		queryUcode.set(index + 8, dataHigh);
+		queryUcode.set(index, dataHigh);
+		queryUcode.set(index + 1, dataLow);
 	}
 	
 	/**
 	 * Add query ucode and its mask bits
-	 * @param ucodeLow
-	 * @param ucodeHigh
-	 * @param maskLow
-	 * @param maskHigh
+	 * @param ucodeLow lower 64-bit data of ucode
+	 * @param ucodeHigh higher 64-bit data of ucode
+	 * @param maskLow lower 64-bit data of mask
+	 * @param maskHigh higher 64-bit data of ucode
 	 * @return int index of the added ucode for later reference
 	 */
-	public int addQuery(long ucodeLow, long ucodeHigh, long maskLow, long maskHigh) {
+	public final int addQuery(long ucodeLow, long ucodeHigh, long maskLow, long maskHigh) {
 		int index = queryUcode.size();
-		queryUcode.add(ucodeLow);
 		queryUcode.add(ucodeHigh);
-		queryMask.add(maskLow);
+		queryUcode.add(ucodeLow);
 		queryMask.add(maskHigh);
-		updateLength();
+		queryMask.add(maskLow);
+		updateUcodeLength();
+		updateLength();		
 		return index;
 	}
 	
@@ -221,44 +248,43 @@ public final class ResUcdQuery extends UrpQuery {
 	 * @return long[] the query mask in little Endian order
 	 * @throws Exception 
 	 */
-	public long[] getQueryMask(int index) throws Exception {
+	public final long[] getQueryMask(int index) throws Exception {
 		if(index % 2 != 0) throw new Exception("the index value of ucode cannot be odd number");
-		index = index + queryUcode.size();
-		long[] l = { queryMask.get(index), queryMask.get(index + 8) };
+		long[] l = { queryMask.get(index), queryMask.get(index + 1) };
 		return l;
 	}
 	
 	/**
 	 * Update a query mask associated with a ucode
 	 * @param index added sequence of ucode NOT of the mask
-	 * @param dataLow
-	 * @param dataHigh
-	 * @throws Exception
+	 * @param dataLow lower 64-bit data of mask
+	 * @param dataHigh higher 64-bit data of mask
+	 * @throws Exception when the index of query ucode is odd number
 	 */
-	public void setQueryMask(int index, long dataLow, long dataHigh) throws Exception {
+	public final void setQueryMask(int index, long dataLow, long dataHigh) throws Exception {
 		if(index % 2 != 0) throw new Exception("the index value of ucode cannot be odd number");
 		index = index + queryUcode.size();
-		queryMask.set(index, dataLow);
-		queryMask.set(index + 8, dataHigh);
+		queryMask.set(index, dataHigh);
+		queryMask.set(index + 1, dataLow);
 	}
 	
-	short getExtLength() {		
-		// TODO if the value exceed Short.MAX_VALUE, 32767, then it won't fit in short
-		// because all java type are signed, we need to change to bigger type or define our own unsigned class
-		// or to beware about how we should expect the value in everyline of code (sounds best? should sum a note)
-		// !!!need to understand behavior of (short) cast from int bigger than short if still preserved bit order
+	/**
+	 * Override getSubLength() to provide size counting of subclass own data storage for queryucode/querymask fields
+	 * @return short the length of data in 8-Octet unit
+	 */
+	short getSubLength() {
 		return (short) ( queryUcode.size() * 2 );
 	}
 	
 	/**
-	 * Concatenate query ucode and query mask data respectively into ByteArray
+	 * Concatenate query ucode and query mask data respectively into Byte array
 	 */
 	Byte[] subPack() {
 		Long[] qu = queryUcode.toArray(new Long[0]);
 		Long[] qm = queryMask.toArray(new Long[0]);
 		// ??? Are there any more effective way of converting Long[] to Byte[] ? 
 		// May be directly pack to Network output stream/buffer/channel may produce less overhead
-		// Also keep everything in byte[] would guarantee re-arrange of data into little endian!
+		// if to change, also do it in ResUcdRecieve.subPack()
 		Byte[] byteArray = Utils.concat( Utils.toByteArray(qu),  Utils.toByteArray(qm) );
 		return byteArray;
 	}
