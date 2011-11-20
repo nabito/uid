@@ -10,9 +10,8 @@ import com.dadfha.Utils;
 public class UrpPacket {
 	
 	/**
-	 * Define the structure of UrpPacket field each with specific byte index
+	 * Define the structure of UrpPacket field each with specific byte index (Independent from byte order of data)
 	 * @author Wirawit
-	 *
 	 */
 	public enum Field {
 		VER				( (short) 0 ),
@@ -35,10 +34,12 @@ public class UrpPacket {
 		}
 	}
 	
+	/**
+	 * The byte array list use to hold value of all fields
+	 */
 	private final List<Byte> data;
 	
 	public UrpPacket() {
-		
 		
 		// all array locations, equal to number of byte blocks, are all init to null
 		data = new ArrayList<Byte>( Arrays.asList( new Byte[Field.values().length] ) ); 
@@ -51,23 +52,50 @@ public class UrpPacket {
 		
 	}
 	
+	/**
+	 * Get Version field
+	 * @return byte of version
+	 */
 	public final byte getVersion() {
 		return data.get( Field.VER.getByteIndex() );
 	}
 	
+	/**
+	 * Update Version field
+	 * @param version
+	 */
+	public final void setVersion(byte version) {
+		data.set( Field.VER.getByteIndex(), version );
+	}
+	
+	/**
+	 * Get Serial Number field
+	 * @return byte of Serial Number
+	 */
 	public final byte getSerialNumber() {
 		return data.get( Field.SERIAL_NO.getByteIndex() );
 	}
 	
+	/**
+	 * Update Serial Number field
+	 * @param serialNumber
+	 */
 	public final void setSerialNumber(byte serialNumber) {
-		data.set(Field.SERIAL_NO.getByteIndex(), serialNumber );
+		data.set( Field.SERIAL_NO.getByteIndex(), serialNumber );
 	}
 	
-	// java is big endian, hence the reversal of byte order from spec
+	/**
+	 * Get Operator field
+	 * @return short Operator code
+	 */
 	public final short getOperator() {
 		return getDataShort( Field.OPERATOR_LOW.getByteIndex() );
 	}
 	
+	/**
+	 * Update Operator field
+	 * @param operator
+	 */
 	public final void setOperator(short operator) {
 		setData(Field.OPERATOR_LOW.getByteIndex(), operator);
 	}
@@ -80,18 +108,23 @@ public class UrpPacket {
 		return getDataShort( Field.PL_LENGTH_LOW.getByteIndex() );
 	}
 	
+	/**
+	 * Get Length field in Hexadecimal representation 
+	 * @return String of Hex
+	 */
 	public final String getLengthInHex() {
-		return Integer.toHexString( getLength() );	 
+		return String.format("%x", getLength());	 
 	}
 
 	/**
-	 * Update the length field to reflect actual size of the packet in Octal-Byte unit (8 bytes).
+	 * Update the Length field to reflect actual size of the packet in Octal-Byte unit (8 bytes).
 	 * The method is left with default modifier for its subclass to call 
 	 * when need to update its own length of data structure
 	 */
 	final void updateLength() {
-		short plLength = (short)( data.size() / 8 ); // ??? considering change this to shift right 3 times? (unsigned対策)
-		plLength = (short) ( plLength + getSubLength() );
+		int length = ( data.size() / 8 ) + getSubLength();
+		if( length > Math.pow(2, Short.SIZE) ) throw new RuntimeException("The data length value exceed the size of length field");
+		short plLength = (short) length;
 		setData( Field.PL_LENGTH_LOW.getByteIndex(), plLength );
 	}
 	
@@ -104,55 +137,84 @@ public class UrpPacket {
 		return 0;
 	}
 	
+	/**
+	 * Get read-only copy of packet data collection in byte array list
+	 * @return
+	 */
 	public final List<Byte> getData() {
 		return Collections.unmodifiableList(data);
 	}	
 	
+	/**
+	 * Get data from byte array list
+	 * @param index the byte index
+	 * @return byte data
+	 */
 	public final byte getData(int index) {
 		return data.get(index);
 	}
 	
 	/**
 	 * Get 2 byte blocks into 1 short from an index
-	 * @param index
-	 * @return short the combined bytes of index and index+1 from little endian to big endian order
+	 * @param index the array index of data's first byte
+	 * @return short the combined bytes of index and index+1 in Big Endian order
 	 */
 	public final short getDataShort(int index) {
-		return (short) ( ( data.get( index + 1 ) << 8 ) | 
-				data.get( index ) );		
+		return (short) ( ( data.get( index ) << 8 ) | 
+				data.get( index + 1 ) );		
 	}	
 	
+	/**
+	 * Update data in byte array list
+	 * @param index the byte index
+	 * @param data byte
+	 */
 	public final void setData(int index, byte data) {
 		this.data.set( index, data );
 	}	
 	
 	/**
-	 * Save short in byte array list from index to index + 1
-	 * @param index
-	 * @param data
+	 * Update short in byte array list from index to index + 1
+	 * @param index the array index of data's first byte
+	 * @param data short data
 	 */
-	public final void setData(int index, short data) {		
-		this.data.set( index, ( (byte) ( data & 0x00ff ) ) );
-		this.data.set( index + 1, ( (byte) ( ( data & 0xff00 ) >>> 8 ) ) );
+	public final void setData(int index, short data) {				
+		this.data.set( index, ( (byte) ( ( data & 0xff00 ) >>> 8 ) ) );
+		this.data.set( index + 1, ( (byte) ( data & 0x00ff ) ) );
 	}
 	
+	/**
+	 * Update int data in Big Endian order start from index
+	 * @param index the array index of data's first byte
+	 * @param data int data
+	 */
 	public final void setData(int index, int data) {
-		this.data.set( index, ( (byte) ( data & 0x000000ff ) ) );
-		this.data.set( index + 1, ( (byte) ( ( data & 0x0000ff00 ) >>> 8 ) ) );
-		this.data.set( index + 2, ( (byte) ( ( data & 0x00ff0000 ) >>> 16 ) ) );
-		this.data.set( index + 3, ( (byte) ( ( data & 0xff000000 ) >>> 24 ) ) );
+		this.data.set( index, ( (byte) ( ( data & 0xff000000 ) >>> 24 ) ) );		
+		this.data.set( index + 1, ( (byte) ( ( data & 0x00ff0000 ) >>> 16 ) ) );
+		this.data.set( index + 2, ( (byte) ( ( data & 0x0000ff00 ) >>> 8 ) ) );
+		this.data.set( index + 3, ( (byte) ( data & 0x000000ff ) ) );
 	}
 	
+	/**
+	 * Update long data in Big Endian order start from index
+	 * @param index the array index of data's first byte
+	 * @param data long data
+	 */
 	public final void setData(int index, long data) {
-		setData(index, ( (int) (data & 0x00000000ffffffffL) ) );
-		setData(index + 4, ( (int) ( (data & 0xffffffff00000000L) >>> 32 ) ) );
+		setData(index, ( (int) ( (data & 0xffffffff00000000L) >>> 32 ) ) );
+		setData(index + 4, ( (int) (data & 0x00000000ffffffffL) ) );		
 	}
 	
+	/**
+	 * Update 128-bit data in Big Endian order start from index
+	 * @param index the array index of data's first byte
+	 * @param low lower 64-bit of data
+	 * @param high higher 64-bit of data
+	 */
 	public final void setData128(int index, long low, long high) {
-		setData(index, low);
-		setData(index + 8, high);
+		setData(index, high);
+		setData(index + 8, low);
 	}	
-	
 	
 	/**
 	 * add new byte to the collection, each adding will result in update of the packet length field
@@ -173,31 +235,47 @@ public class UrpPacket {
 	 */
 	public final int addShort(short data) {
 		int head = this.data.size();
-		this.data.add( (byte) (data & 0x00ff) );
 		this.data.add( (byte) ( (data & 0xff00) >>> 8 ) );
+		this.data.add( (byte) (data & 0x00ff) );
 		updateLength();
 		return head;
 	}
 	
+	/**
+	 * Add integer into packet in Big Endian order
+	 * @param data
+	 * @return int the array index of added data
+	 */
 	public final int addInt(int data) {
 		int head = this.data.size();
-		this.data.add( (byte) (data & 0x000000ff) );
-		this.data.add( (byte) ( (data & 0x0000ff00) >>> 8 ) );
+		this.data.add( (byte) ( (data & 0xff000000) >>> 24) );
 		this.data.add( (byte) ( (data & 0x00ff0000) >>> 16 ) );
-		this.data.add( (byte) ( (data & 0xff000000) >>> 24 ) );
+		this.data.add( (byte) ( (data & 0x0000ff00) >>> 8 ) );
+		this.data.add( (byte) (data & 0x000000ff) );
 		updateLength();
 		return head;
 	}
 	
+	/**
+	 * Add long into packet in Big Endian order
+	 * @param data
+	 * @return int the array index of added data
+	 */
 	public final int addLong(long data) {
-		int head = addInt( (int) (data & 0x00000000ffffffffL ) );
-		addInt( (int) ( (data & 0xffffffff00000000L ) >>> 32 ) );
+		int head = addInt( (int) ( (data & 0xffffffff00000000L ) >>> 32 ) );
+		addInt( (int) (data & 0x00000000ffffffffL ) );		
 		return head;
 	}
 	
+	/**
+	 * Add 128-bit of data into packet in Big Endian order
+	 * @param low lower 64-bit of data
+	 * @param high higher 64-bit of data
+	 * @return int the array index of added data
+	 */
 	public final int add128(long low, long high) {
-		int head = addLong(low);
-		addLong(high);
+		int head = addLong(high);
+		addLong(low);
 		return head;		
 	}
 	

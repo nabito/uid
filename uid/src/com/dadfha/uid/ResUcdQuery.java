@@ -1,7 +1,5 @@
 package com.dadfha.uid;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -14,7 +12,6 @@ import com.dadfha.uid.UcodeRP.UcodeType;
 /**
  * Class representing packet structure for the res_ucd query command
  * @author Wirawit
- *
  */
 public final class ResUcdQuery extends UrpQuery {
 
