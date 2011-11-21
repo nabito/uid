@@ -36,10 +36,18 @@ public class UrpQuery extends UrpPacket {
 		
 	}
 	
+	/**
+	 * Get Command Id
+	 * @return Command
+	 */
 	public Command getCommandId() {
 		return Command.valueOf(getOperator());
 	}
 	
+	/**
+	 * Update Command Id
+	 * @param command
+	 */
 	public void setCommandId(Command command) {
 		this.setOperator(command.getCode());
 	}

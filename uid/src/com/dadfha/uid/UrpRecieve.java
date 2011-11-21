@@ -39,10 +39,18 @@ public class UrpRecieve extends UrpPacket {
 		
 	}
 	
-	public Error getErrorCode(short code) {
-		return Error.valueOf(code);
+	/**
+	 * Get Error Code
+	 * @return Error
+	 */
+	public Error getErrorCode() {
+		return Error.valueOf(getOperator());
 	}
 	
+	/**
+	 * Update Error Code
+	 * @param error
+	 */
 	public void setErrorCode(Error error) {
 		setOperator( error.getCode() );
 	}
