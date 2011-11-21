@@ -122,8 +122,8 @@ public final class ResUcdRecieve extends UrpRecieve {
 		}
 	}
 	
-	private List<Long> data = new ArrayList<Long>(); 
-	private List<Long> returnMask = new ArrayList<Long>();
+	private final List<Long> data = new ArrayList<Long>(); 
+	private final List<Long> returnMask = new ArrayList<Long>();
 	
 	public ResUcdRecieve(int ttl, short dataVersion, ResolveMode mode, DataAttribute attribute, DataType type, short dataLength) {
 		

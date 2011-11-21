@@ -8,7 +8,7 @@ public class UcodeRS {
 	
 	public UcodeRS() { }
 	
-	
+	// TODO first own simple server, second Netty framework, third Cassandra DB
 	
 	
 }

@@ -90,8 +90,8 @@ public final class ResUcdQuery extends UrpQuery {
 		}
 	}
 	
-	private List<Long> queryUcode = new ArrayList<Long>();
-	private List<Long> queryMask = new ArrayList<Long>();
+	private final List<Long> queryUcode = new ArrayList<Long>();
+	private final List<Long> queryMask = new ArrayList<Long>();
 	
 	public ResUcdQuery(int t, QueryMode queryMode, QueryAttribute queryAttribute, short ucodeType, short ucodeLength) {
 		int temp;
