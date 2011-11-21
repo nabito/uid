@@ -272,6 +272,7 @@ public final class ResUcdQuery extends UrpQuery {
 	 * Override getSubLength() to provide size counting of subclass own data storage for queryucode/querymask fields
 	 * @return short the length of data in 8-Octet unit
 	 */
+	@Override
 	short getSubLength() {
 		return (short) ( queryUcode.size() * 2 );
 	}
@@ -279,6 +280,7 @@ public final class ResUcdQuery extends UrpQuery {
 	/**
 	 * Concatenate query ucode and query mask data respectively into Byte array
 	 */
+	@Override
 	Byte[] subPack() {
 		Long[] qu = queryUcode.toArray(new Long[0]);
 		Long[] qm = queryMask.toArray(new Long[0]);

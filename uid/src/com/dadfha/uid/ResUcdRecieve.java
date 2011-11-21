@@ -324,6 +324,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 	 * Override getSubLength() to provide size counting of subclass own data storage for data and returnmask fields
 	 * @return short the length of data in 8-Octet unit
 	 */
+	@Override
 	short getSubLength() {
 		// +1 is from the row of reserved bits and masklength field
 		return (short) ( data.size() + 1 + returnMask.size() );
@@ -332,6 +333,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 	/**
 	 * Concatenate Resolved Data, masklength row and Return Mask into Byte array
 	 */
+	@Override
 	Byte[] subPack() {
 		Long[] d = data.toArray(new Long[0]);
 		Byte[] maskLengthRow = { 0, 0, 0, 0, 0, 0, (byte) ( ( getMaskLength() & 0xff00 ) >>> 8 ), (byte) ( getMaskLength() & 0x00ff ) };
