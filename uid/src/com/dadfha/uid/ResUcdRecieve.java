@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.dadfha.Utils;
+import com.dadfha.uid.DataEntry.DataAttribute;
+import com.dadfha.uid.DataEntry.DataType;
 
 
 public final class ResUcdRecieve extends UrpRecieve {
@@ -37,70 +39,6 @@ public final class ResUcdRecieve extends UrpRecieve {
 			return table.get(code);
 		}
 	}	
-	
-	public enum DataAttribute {
-		UIDC_ATTR_RS		( (short) 0x0001 ),
-		UIDC_ATTR_SS		( (short) 0x0002 ),
-		UIDC_ATTR_SIGS		( (short) 0x0003 ),
-		UID_USER			( (short) 0x00ff );
-		
-		private short code;
-		private static Map<Short, DataAttribute> table = new HashMap<Short, DataAttribute>();
-		
-		static {
-			for(DataAttribute da : EnumSet.allOf(DataAttribute.class)) {
-				table.put(da.getCode(), da);
-			}
-		}
-		
-		private DataAttribute(short code) {
-			this.code = code;
-		}
-		
-		public short getCode() {
-			return code;
-		}	
-		
-		public static DataAttribute valueOf(short code) {
-			return table.get(code);
-		}
-	}	
-	
-	public enum DataType {
-		UIDC_DATATYPE_UCODE_128		( (short) 0x0001 ),
-		UIDC_DATATYPE_UCODE_256		( (short) 0x0002 ),
-		UIDC_DATATYPE_UCODE_384		( (short) 0x0003 ),
-		UIDC_DATATYPE_UCODE_512		( (short) 0x0004 ),
-		UIDC_DATATYPE_UCODE_IPV4	( (short) 0x0011 ),
-		UIDC_DATATYPE_UCODE_IPV6	( (short) 0x0012 ),
-		UIDC_DATATYPE_UCODE_URL		( (short) 0x0013 ),
-		UIDC_DATATYPE_UCODE_HOST	( (short) 0x0014 ),
-		UIDC_DATATYPE_UCODE_EMAIL	( (short) 0x0021 ),
-		UIDC_DATATYPE_UCODE_PHONE	( (short) 0x0031 ),
-		UIDC_DATATYPE_UCODE_TXT		( (short) 0x00fe ),
-		UIDC_DATATYPE_UCODE_USER	( (short) 0x00ff );
-		
-		private short code;
-		private static Map<Short, DataType> table = new HashMap<Short, DataType>();
-		
-		static {
-			for(DataType dt : EnumSet.allOf(DataType.class)) {
-				table.put(dt.getCode(), dt);
-			}
-		}		
-		
-		private DataType(short code) {
-			this.code = code;
-		}
-		
-		public short getCode() {
-			return code;
-		}
-
-		public static DataType valueOf(short code) {
-			return table.get(code);
-		}
-	}
 
 	public enum ResUcdRecieveField {
 		TTL				( (short) 8 ),
@@ -122,7 +60,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 		}
 	}
 	
-	private final List<Long> data = new ArrayList<Long>(); 
+	private final List<Long> data = new ArrayList<Long>();
 	private final List<Long> returnMask = new ArrayList<Long>();
 	
 	public ResUcdRecieve(int ttl, short dataVersion, ResolveMode mode, DataAttribute attribute, DataType type, short dataLength) {

@@ -37,7 +37,7 @@ public class UrpPacket {
 	/**
 	 * The byte array list use to hold value of all fields
 	 */
-	private final List<Byte> data;
+	private final List<Byte> data; // ??? Considering using java.nio.ByteBuffer in the future for better performance
 	
 	public UrpPacket() {
 		

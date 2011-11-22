@@ -6,8 +6,8 @@ import java.util.TreeMap;
 public class DataFile {
 
 	public enum CascadeMode {
-		UIDC_NOCSC	( (byte) 0x01 ),
-		UIDC_CSC	( (byte) 0x02 );
+		UIDC_NOCSC	( (byte) 0x01 ),	// NOT providing cascade search function
+		UIDC_CSC	( (byte) 0x02 );	// Providing cascade search function for the ucode resolution server
 		
 		private byte code;
 		
@@ -25,10 +25,10 @@ public class DataFile {
 	private CascadeMode cascadeMode;
 	private final Map<Ucode, DataEntry> dataEntry = new TreeMap<Ucode, DataEntry>();			
 
-	public DataFile(Ucode dbUcode, UcodeMask dbMask, CascadeMode mode) {
+	public DataFile(Ucode dbUcode, UcodeMask dbMask, CascadeMode cascadeMode) {
 		this.dbUcode = dbUcode;
 		this.dbMask = dbMask;
-		cascadeMode = mode;
+		this.cascadeMode = cascadeMode;
 	}
 	
 	public final Ucode getDbUcode() {
@@ -93,6 +93,11 @@ public class DataFile {
 	 */
 	public final void deleteDataEntry(Ucode code) {
 		dataEntry.remove(code);
+		System.gc();
+	}
+	
+	public final void clearDataEntry() {
+		dataEntry.clear();
 		System.gc();
 	}
 	

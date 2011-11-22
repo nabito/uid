@@ -1,14 +1,10 @@
 package com.dadfha.uid;
 
-public class Ucode implements Comparable {
+public class Ucode implements Comparable<Ucode> {
 	
 	long highBits;
 	long lowBits;
-	
-	public Ucode() {
-		this(0, 0);
-	}
-	
+		
 	public Ucode(long highBits, long lowBits) {
 		this.highBits = highBits;
 		this.lowBits = lowBits;
@@ -45,13 +41,11 @@ public class Ucode implements Comparable {
 		return String.format("%x", highBits) + String.format("%x", lowBits);
 	}
 
-	// TODO this must be completed!
 	@Override
-	public int compareTo(Object ucode) {
-	    if (!(ucode instanceof Ucode))
-	        throw new ClassCastException("A Ucode object expected.");	
-	    // Ucode code = (Ucode) ucode; // we will need this line only when some Ucode's methods are to be used
-		return this.toString().compareTo(ucode.toString());
+	public int compareTo(Ucode ucode) {
+		// Comparison between hex using string alphabetical compare works 
+		// ONLY IF both string are of same length and case
+		return this.toString().toLowerCase().compareTo(ucode.toString().toLowerCase());
 	}
 
 }
