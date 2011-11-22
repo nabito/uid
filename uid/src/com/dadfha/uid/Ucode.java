@@ -40,14 +40,18 @@ public class Ucode implements Comparable {
 		this.lowBits = lowBits;
 	}
 	
+	@Override
 	public String toString() {
 		return String.format("%x", highBits) + String.format("%x", lowBits);
 	}
 
 	// TODO this must be completed!
 	@Override
-	public int compareTo(Object arg0) {
-		return 0;
+	public int compareTo(Object ucode) {
+	    if (!(ucode instanceof Ucode))
+	        throw new ClassCastException("A Ucode object expected.");	
+	    // Ucode code = (Ucode) ucode; // we will need this line only when some Ucode's methods are to be used
+		return this.toString().compareTo(ucode.toString());
 	}
 
 }
