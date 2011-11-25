@@ -1,5 +1,6 @@
 package com.dadfha.uid;
 
+import java.net.InetAddress;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,5 +48,21 @@ public class UcodeRP {
 	public static UcodeRP getUcodeRP() {
 		return object;
 	}
+	
+	public final byte[] resolveUcode(Ucode code, InetAddress address) {
+		// TODO  resolveUcode()
+		
+		return null;
+	}
+	
+	public final void parsePacket(byte[] buffer) {
+		// TODO parsePacket()
+		
+	}
+	
+	public final void processRequest() {
+		// ??? done after the parse?
+	}
+	
 	
 }

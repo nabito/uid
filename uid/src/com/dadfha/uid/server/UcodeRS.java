@@ -1,8 +1,23 @@
-package com.dadfha.uid;
+package com.dadfha.uid.server;
 
 import java.util.Map;
 import java.util.TreeMap;
 
+import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
+
+import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+
+
+import com.dadfha.uid.DataEntry;
+import com.dadfha.uid.DataFile;
+import com.dadfha.uid.Ucode;
+import com.dadfha.uid.UcodeMask;
+import com.dadfha.uid.UcodeRP;
 import com.dadfha.uid.DataEntry.DataAttribute;
 import com.dadfha.uid.DataEntry.DataType;
 import com.dadfha.uid.DataFile.CascadeMode;
@@ -15,8 +30,12 @@ public class UcodeRS {
 	
 	private final Map<Ucode, DataFile> ucodeSpace = new TreeMap<Ucode, DataFile>();
 	private final UcodeRP ucrp = UcodeRP.getUcodeRP();
+	public static final int SERVER_PORT = 8080;
 	
 	public UcodeRS() { 
+		
+		// init server process
+		initServer();
 		
 		// init server data
 		DataFile file1 = new DataFile(new Ucode(0x0efffec000000000L, 0x0000000000040000L), new UcodeMask(0xffffffffffffffffL, 0xffffffffffff0000L), CascadeMode.UIDC_NOCSC);
@@ -54,7 +73,25 @@ public class UcodeRS {
 		
 	}
 	
-	// TODO first own simple server, second Netty framework, third Cassandra DB
+	public final void initServer() {
+				
+        // Configure the server.
+        ServerBootstrap bootstrap = new ServerBootstrap(
+                new NioServerSocketChannelFactory(
+                        Executors.newCachedThreadPool(),
+                        Executors.newCachedThreadPool()));
+
+        // Set up the pipeline factory.
+        bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+            public ChannelPipeline getPipeline() throws Exception {
+                return Channels.pipeline(new UcrServerHandler());
+            }
+        });
+
+        // Bind and start to accept incoming connections.
+        bootstrap.bind(new InetSocketAddress(SERVER_PORT));
+						
+	}
 	
 	
 }

@@ -3,6 +3,13 @@ package com.dadfha.uid;
 import java.util.Map;
 import java.util.TreeMap;
 
+
+// TODO  soon to create Cassandra DB
+/**
+ * Data File for ucode store 
+ * @author nabito
+ *
+ */
 public class DataFile {
 
 	public enum CascadeMode {
