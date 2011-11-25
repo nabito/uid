@@ -1,4 +1,4 @@
-package com.dadfha.uid;
+package com.dadfha.uid.server;
 
 /**
  * ucode Resolution Database

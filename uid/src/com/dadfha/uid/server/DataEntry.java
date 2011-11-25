@@ -1,4 +1,4 @@
-package com.dadfha.uid;
+package com.dadfha.uid.server;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.dadfha.uid.Ucode;
+import com.dadfha.uid.UcodeMask;
 import com.google.common.primitives.Bytes;
 
 public class DataEntry {

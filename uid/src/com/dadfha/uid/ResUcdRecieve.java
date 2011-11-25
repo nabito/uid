@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.dadfha.Utils;
-import com.dadfha.uid.DataEntry.DataAttribute;
-import com.dadfha.uid.DataEntry.DataType;
+import com.dadfha.uid.server.DataEntry.DataAttribute;
+import com.dadfha.uid.server.DataEntry.DataType;
 
 
 public final class ResUcdRecieve extends UrpRecieve {

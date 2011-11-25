@@ -13,14 +13,12 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
 
-import com.dadfha.uid.DataEntry;
-import com.dadfha.uid.DataFile;
 import com.dadfha.uid.Ucode;
 import com.dadfha.uid.UcodeMask;
 import com.dadfha.uid.UcodeRP;
-import com.dadfha.uid.DataEntry.DataAttribute;
-import com.dadfha.uid.DataEntry.DataType;
-import com.dadfha.uid.DataFile.CascadeMode;
+import com.dadfha.uid.server.DataEntry.DataAttribute;
+import com.dadfha.uid.server.DataEntry.DataType;
+import com.dadfha.uid.server.DataFile.CascadeMode;
 
 /**
  * ucode Resolution Server
