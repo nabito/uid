@@ -25,25 +25,20 @@ public class UC {
 		
 	}
 	
-	// TODO modify client code to be more generic
-    public final void connect(String[] args) throws Exception {
-        // Print usage if no argument is specified.
-        if (args.length < 2 || args.length > 3) {
-            System.err.println(
-                    "Usage: " + UC.class.getSimpleName() +
-                    " <host> <port> [<first message size>]");
-            return;
-        }
+	// TODO make support for InetAddress connection and add the sendUcode, readUcodeTag and mock-up main 
+	/**
+	 * Connect to UCR Server
+	 * @param host hostname of UCR Server
+	 * @param port specify specific port of the connection
+	 * @param firstMessageSize pass 0 if not known in advance (256 will be used default)
+	 * @throws Exception
+	 */
+    public final void connect(final String host, final int port, int firstMessageSize) throws Exception {
 
-        // Parse options.
-        final String host = args[0];
-        final int port = Integer.parseInt(args[1]);
-        final int firstMessageSize;
-        if (args.length == 3) {
-            firstMessageSize = Integer.parseInt(args[2]);
-        } else {
-            firstMessageSize = 256;
-        }
+    	// Check if first message size is defined and finalize it
+    	final int messageSize;
+        if(firstMessageSize == 0) messageSize = 256;
+        else messageSize = firstMessageSize;
 
         // Configure the client.
         ClientBootstrap bootstrap = new ClientBootstrap(
@@ -55,7 +50,7 @@ public class UC {
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
                 return Channels.pipeline(
-                        new UcrClientHandler(firstMessageSize));
+                        new UcrClientHandler(messageSize));
             }
         });
 
@@ -70,3 +65,4 @@ public class UC {
     }	
 	
 }
+	
