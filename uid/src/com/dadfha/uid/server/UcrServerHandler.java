@@ -12,6 +12,7 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
 import com.dadfha.uid.UcodeRP;
+import com.dadfha.uid.UrpPacket;
 
 public class UcrServerHandler extends SimpleChannelUpstreamHandler {
 	
@@ -47,8 +48,8 @@ public class UcrServerHandler extends SimpleChannelUpstreamHandler {
 			bb.get(buffer, 0, buffer.length);
 		}
 		
-		// Parse data if it matches UCR Protocol format
-		protocol.parsePacket(buffer);
+		// Parse data in UCR Protocol:UrpQuery format
+		UrpPacket packet = protocol.parseQueryPacket(buffer);
 		
 		// TODO search for the ucr code in db and return the result
 

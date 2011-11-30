@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.dadfha.Utils;
+import com.google.common.primitives.Bytes;
 
 public class UrpPacket {
 	
@@ -16,8 +17,8 @@ public class UrpPacket {
 	public enum Field {
 		VER				( (short) 0 ),
 		SERIAL_NO		( (short) 1 ),
-		OPERATOR_LOW	( (short) 2 ), // Can be either Command ID or Error Code depended on the type of packet
-		OPERATOR_HIGH	( (short) 3 ),
+		OPERATOR_HIGH	( (short) 2 ), // Can be either Command ID or Error Code depended on the type of packet
+		OPERATOR_LOW	( (short) 3 ),
 		RESERVED_LOW	( (short) 4 ),
 		RESERVED_HIGH	( (short) 5 ),
 		PL_LENGTH_LOW	( (short) 6 ),
@@ -89,7 +90,7 @@ public class UrpPacket {
 	 * @return short Operator code
 	 */
 	public final short getOperator() {
-		return getDataShort( Field.OPERATOR_LOW.getByteIndex() );
+		return getDataShort( Field.OPERATOR_HIGH.getByteIndex() );
 	}
 	
 	/**
@@ -97,7 +98,7 @@ public class UrpPacket {
 	 * @param operator
 	 */
 	public final void setOperator(short operator) {
-		setData(Field.OPERATOR_LOW.getByteIndex(), operator);
+		setData(Field.OPERATOR_HIGH.getByteIndex(), operator);
 	}
 	
 	/**
@@ -218,7 +219,7 @@ public class UrpPacket {
 	}	
 	
 	/**
-	 * add new byte to the collection, each adding will result in update of the packet length field
+	 * Add new byte to the collection, each adding will result in update of the packet length field
 	 * @param data
 	 * @return int index of currently add byte
 	 */
@@ -230,7 +231,19 @@ public class UrpPacket {
 	}
 	
 	/**
-	 * add new short to the collection, each adding will result in update of the packet length field
+	 * Add whole byte array to the collection.
+	 * @param byteArray
+	 * @return int index of first byte added	 
+	 */
+	public final int addBytes(byte[] byteArray) {
+		int head = this.data.size();
+		data.addAll( Bytes.asList(byteArray) );
+		updateLength();
+		return head;
+	}
+	
+	/**
+	 * Add new short to the collection, each adding will result in update of the packet length field
 	 * @param data
 	 * @return int index of currently add short
 	 */
