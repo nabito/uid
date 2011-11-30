@@ -6,13 +6,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
+import com.dadfha.uid.ResUcdQuery;
+import com.dadfha.uid.ResUcdRecieve;
 import com.dadfha.uid.UcodeRP;
-import com.dadfha.uid.UrpPacket;
 
 public class UcrServerHandler extends SimpleChannelUpstreamHandler {
 	
@@ -29,10 +31,6 @@ public class UcrServerHandler extends SimpleChannelUpstreamHandler {
 
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
-		// Send back the received message to the remote peer.
-		transferredBytes.addAndGet(((ChannelBuffer) e.getMessage())
-				.readableBytes());
-		e.getChannel().write(e.getMessage());
 
 		// Read data from buffer
 		ByteBuffer bb = ((ChannelBuffer) e.getMessage()).toByteBuffer();
@@ -49,9 +47,15 @@ public class UcrServerHandler extends SimpleChannelUpstreamHandler {
 		}
 		
 		// Parse data in UCR Protocol:UrpQuery format
-		UrpPacket packet = protocol.parseQueryPacket(buffer);
+		ResUcdQuery queryPacket = (ResUcdQuery) protocol.parseQueryPacket(buffer);
 		
-		// TODO search for the ucr code in db and return the result
+		// Process query
+		ResUcdRecieve returnPacket = (ResUcdRecieve) protocol.processQuery(queryPacket);
+	
+		// Return resolved data packet
+		ChannelBuffer returnBuffer = ChannelBuffers.wrappedBuffer(returnPacket.pack()); // Wrap return packet byte array
+		transferredBytes.addAndGet( returnBuffer.readableBytes() ); // Update the transferred byte
+		e.getChannel().write(returnBuffer);		
 
 	}
 

@@ -19,8 +19,8 @@ public class UrpPacket {
 		SERIAL_NO		( (short) 1 ),
 		OPERATOR_HIGH	( (short) 2 ), // Can be either Command ID or Error Code depended on the type of packet
 		OPERATOR_LOW	( (short) 3 ),
-		RESERVED_LOW	( (short) 4 ),
-		RESERVED_HIGH	( (short) 5 ),
+		RESERVED_HIGH	( (short) 4 ),
+		RESERVED_LOW	( (short) 5 ),
 		PL_LENGTH_LOW	( (short) 6 ),
 		PL_LENGTH_HIGH	( (short) 7 );
 		
@@ -49,7 +49,7 @@ public class UrpPacket {
 		data.set( Field.VER.getByteIndex(), (byte) 1 );			
 		
 		// pre-fill the reserved field with 0 as of current protocol spec (9/11/2011)
-		setData( Field.RESERVED_LOW.getByteIndex(), (short) 0 );	
+		setData( Field.RESERVED_HIGH.getByteIndex(), (short) 0 );	
 		
 	}
 	
@@ -294,12 +294,12 @@ public class UrpPacket {
 	}
 	
 	/**
-	 * Pack data in Byte array form by extract Byte array from data list 
+	 * Pack data in byte array by extract byte array from data list 
 	 * and merge with Byte array from subclass (if any)
 	 * @return byte[]
 	 */
-	public final Byte[] pack() {		 
-		Byte[] byteArray = Utils.concat(data.toArray(new Byte[0]), subPack());
+	public final byte[] pack() {	
+		byte[] byteArray = Bytes.concat(Bytes.toArray(data), subPack());
 		return byteArray;
 	}
 	
@@ -307,7 +307,7 @@ public class UrpPacket {
 	 * Method for subclass to override and provide all of its fields data in order based on spec
 	 * @return byte[]
 	 */
-	Byte[] subPack() {
+	byte[] subPack() {
 		return null;
 	}
 

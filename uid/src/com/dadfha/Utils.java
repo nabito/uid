@@ -15,21 +15,9 @@ public class Utils {
 		System.arraycopy(second, 0, result, first.length, second.length);
 		return result;
 	}
-	
-	/**
-	 * Array concatenation of primitive byte
-	 * @param first
-	 * @param second
-	 * @return byte[]
-	 */
-	public static byte[] concat(byte[] first, byte[] second) {
-		byte[] result = Arrays.copyOf(first, first.length + second.length);
-		System.arraycopy(second, 0, result, first.length, second.length);
-		return result;
-	}	
 
 	/**
-	 * Array concatenation of generic type object array of more than two
+	 * Array concatenation of generic type object array of more than two parameters
 	 * @param first
 	 * @param rest
 	 * @return <T> T[]
@@ -50,13 +38,14 @@ public class Utils {
 	
 	/**
 	 * Convert array of Long to array of Byte in Big Endian byte order
+	 * This method uses memory copy technique, which is costly, and is not recommended for use extensively
 	 * @param longArray
 	 * @return Byte[] containing copy of data from longArray
 	 */
-	public static Byte[] toByteArray(Long[] longArray) {
-		Byte[] byteArray = new Byte[longArray.length * 8];
+	public static byte[] toByteArray(long[] longArray) {
+		byte[] byteArray = new byte[longArray.length * 8];
 		int i = 0;
-		for(Long l : longArray) {			
+		for(long l : longArray) {			
 			byteArray[i] = (byte) ( (l & 0xff00000000000000L) >>> 56 );
 			byteArray[i+1] = (byte) ( (l & 0xff000000000000L) >>> 48 );
 			byteArray[i+2] = (byte) ( (l & 0xff0000000000L) >>> 40 );

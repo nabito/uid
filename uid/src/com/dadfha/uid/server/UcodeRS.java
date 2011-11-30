@@ -1,7 +1,5 @@
 package com.dadfha.uid.server;
 
-import java.util.Map;
-import java.util.TreeMap;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
@@ -12,10 +10,8 @@ import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
-
 import com.dadfha.uid.Ucode;
 import com.dadfha.uid.UcodeMask;
-import com.dadfha.uid.UcodeRP;
 import com.dadfha.uid.server.DataEntry.DataAttribute;
 import com.dadfha.uid.server.DataEntry.DataType;
 import com.dadfha.uid.server.DataFile.CascadeMode;
@@ -26,16 +22,44 @@ import com.dadfha.uid.server.DataFile.CascadeMode;
  */
 public class UcodeRS {
 	
-	private final Map<Ucode, DataFile> ucodeSpace = new TreeMap<Ucode, DataFile>();
-	private final UcodeRP ucrp = UcodeRP.getUcodeRP();
+	private UcodeRD database;
 	public static final int SERVER_PORT = 8080;
 	
-	public UcodeRS() { 
+	public UcodeRS() { 						
+		database = new UcodeRD();
+	}
+	
+	public static void main(String[] args) {
+		UcodeRS server = new UcodeRS();
+		server.initServer();
+		server.initMockDbData();
+	}
+	
+	public final void initServer() {
+				
+        // Configure the server.
+        ServerBootstrap bootstrap = new ServerBootstrap(
+                new NioServerSocketChannelFactory(
+                        Executors.newCachedThreadPool(),
+                        Executors.newCachedThreadPool()));
+
+        // Set up the pipeline factory.
+        bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+            public ChannelPipeline getPipeline() throws Exception {
+                return Channels.pipeline(new UcrServerHandler());
+            }
+        });
+
+        // Bind and start to accept incoming connections.
+        bootstrap.bind(new InetSocketAddress(SERVER_PORT));
+						
+	}
+	
+	/**
+	 * Initialize mock-up db data
+	 */
+	public void initMockDbData() {
 		
-		// init server process
-		initServer();
-		
-		// init server data
 		DataFile file1 = new DataFile(new Ucode(0x0efffec000000000L, 0x0000000000040000L), new UcodeMask(0xffffffffffffffffL, 0xffffffffffff0000L), CascadeMode.UIDC_NOCSC);
 		try {
 			file1.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050100L),
@@ -66,30 +90,10 @@ public class UcodeRS {
 			// Return message to user that the the supplied ucode is not supported in this space
 		}
 		DataFile file2 = new DataFile(new Ucode(0x0efffec000000000L, 0x0000000000050000L), new UcodeMask(0xffffffffffffffffL, 0xffffffffffff0000L), CascadeMode.UIDC_CSC);
-		ucodeSpace.put(file1.getDbUcode(), file1);
-		ucodeSpace.put(file2.getDbUcode(), file2);
+		database.addDataFile(file1);
+		database.addDataFile(file2);				
 		
-	}
-	
-	public final void initServer() {
-				
-        // Configure the server.
-        ServerBootstrap bootstrap = new ServerBootstrap(
-                new NioServerSocketChannelFactory(
-                        Executors.newCachedThreadPool(),
-                        Executors.newCachedThreadPool()));
-
-        // Set up the pipeline factory.
-        bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-            public ChannelPipeline getPipeline() throws Exception {
-                return Channels.pipeline(new UcrServerHandler());
-            }
-        });
-
-        // Bind and start to accept incoming connections.
-        bootstrap.bind(new InetSocketAddress(SERVER_PORT));
-						
-	}
+	}	
 	
 	
 }

@@ -1,6 +1,5 @@
 package com.dadfha.uid;
 
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,8 +16,7 @@ public class UrpRecieve extends UrpPacket {
 		private static final Map<Short, Error> table = new HashMap<Short, Error>();
 		
 	     static {
-	    	 // XXX for(Error e : Error.values()) // is this better?
-	         for(Error e : EnumSet.allOf(Error.class))
+	    	 for(Error e : Error.values()) 
 	               table.put(e.getCode(), e);
 	     }		
 		

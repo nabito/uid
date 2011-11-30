@@ -1,13 +1,15 @@
 package com.dadfha.uid;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.dadfha.Utils;
 import com.dadfha.uid.UcodeRP.UcodeType;
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Longs;
 
 /**
  * Class representing packet structure for the res_ucd query command
@@ -24,7 +26,7 @@ public final class ResUcdQuery extends UrpQuery {
 		private static Map<Short, QueryMode> table = new HashMap<Short, QueryMode>();
 		
 		static {
-			for(QueryMode q : EnumSet.allOf(QueryMode.class)) {
+			for(QueryMode q : QueryMode.values()) {
 				table.put(q.getCode(), q);
 			}
 		}
@@ -53,7 +55,7 @@ public final class ResUcdQuery extends UrpQuery {
 		private static Map<Short, QueryAttribute> table = new HashMap<Short, QueryAttribute>();
 		
 		static {
-			for(QueryAttribute qa : EnumSet.allOf(QueryAttribute.class)) {
+			for(QueryAttribute qa : QueryAttribute.values()) {
 				table.put(qa.getCode(), qa);
 			}
 		}
@@ -96,7 +98,7 @@ public final class ResUcdQuery extends UrpQuery {
 	public ResUcdQuery(int t, QueryMode queryMode, QueryAttribute queryAttribute, short ucodeType, short ucodeLength) {
 		int temp;
 		
-		// init all fields
+		// Initialize all fields
 		temp = addInt(t);
 		assert temp == ResUcdQueryField.T.getByteIndex();
 		temp = addInt(0);
@@ -199,6 +201,14 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
+	 * Get unmodifiable view of raw queryucode List
+	 * @return List<Long>
+	 */
+	public final List<Long> getQueryUcode() {
+		return Collections.unmodifiableList(queryUcode);		
+	}
+	
+	/**
 	 * Get a 128-bit query ucode
 	 * @param index added sequence of ucode  
 	 * @return long[] the query ucode in little endian order
@@ -243,6 +253,14 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
+	 * Get unmodifiable view of raw querymask List
+	 * @return List<Long>
+	 */
+	public final List<Long> getQueryMask() {
+		return Collections.unmodifiableList(queryMask);		
+	}	
+	
+	/**
 	 * Get a query mask
 	 * @param index added sequence of ucode NOT of the mask
 	 * @return long[] the query mask in little Endian order
@@ -281,13 +299,13 @@ public final class ResUcdQuery extends UrpQuery {
 	 * Concatenate query ucode and query mask data respectively into Byte array
 	 */
 	@Override
-	Byte[] subPack() {
-		Long[] qu = queryUcode.toArray(new Long[0]);
-		Long[] qm = queryMask.toArray(new Long[0]);
-		// ??? Are there any more effective way of converting Long[] to Byte[] ? 
+	byte[] subPack() {
+		long[] qu = Longs.toArray(queryUcode);
+		long[] qm = Longs.toArray(queryMask);
+		// ??? Are there any more effective way of converting long[] to byte[] ? 
 		// May be directly pack to Network output stream/buffer/channel may produce less overhead
 		// if to change, also do it in ResUcdRecieve.subPack()
-		Byte[] byteArray = Utils.concat( Utils.toByteArray(qu),  Utils.toByteArray(qm) );
+		byte[] byteArray = Bytes.concat( Utils.toByteArray(qu),  Utils.toByteArray(qm) );
 		return byteArray;
 	}
 	

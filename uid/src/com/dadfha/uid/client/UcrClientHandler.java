@@ -12,7 +12,7 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
-// TODO change the program to match uid client spec
+// TODO change the program to control the message send to server, not just firstMessage
 public class UcrClientHandler extends SimpleChannelUpstreamHandler {
 
     private static final Logger logger = Logger.getLogger(

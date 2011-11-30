@@ -1,6 +1,5 @@
 package com.dadfha.uid;
 
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,7 +12,7 @@ public class UrpQuery extends UrpPacket {
 		private static Map<Short, Command> table = new HashMap<Short, Command>();
 		
 		static {
-			for(Command c : EnumSet.allOf(Command.class)) {
+			for(Command c : Command.values()) {
 				table.put(c.getCode(), c);
 			}
 		}

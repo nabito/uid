@@ -1,7 +1,6 @@
 package com.dadfha.uid;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +8,8 @@ import java.util.Map;
 import com.dadfha.Utils;
 import com.dadfha.uid.server.DataEntry.DataAttribute;
 import com.dadfha.uid.server.DataEntry.DataType;
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Longs;
 
 
 public final class ResUcdRecieve extends UrpRecieve {
@@ -22,7 +23,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 		private static Map<Short, ResolveMode> table = new HashMap<Short, ResolveMode>();
 		
 		static {
-			for(ResolveMode rm : EnumSet.allOf(ResolveMode.class)) {
+			for(ResolveMode rm : ResolveMode.values()) {
 				table.put(rm.getCode(), rm);
 			}
 		}
@@ -272,11 +273,11 @@ public final class ResUcdRecieve extends UrpRecieve {
 	 * Concatenate Resolved Data, masklength row and Return Mask into Byte array
 	 */
 	@Override
-	Byte[] subPack() {
-		Long[] d = data.toArray(new Long[0]);
-		Byte[] maskLengthRow = { 0, 0, 0, 0, 0, 0, (byte) ( ( getMaskLength() & 0xff00 ) >>> 8 ), (byte) ( getMaskLength() & 0x00ff ) };
-		Long[] rm = returnMask.toArray(new Long[0]);
-		Byte[] byteArray = Utils.concatAll( Utils.toByteArray(d), maskLengthRow, Utils.toByteArray(rm) );
+	byte[] subPack() {		
+		long[] d = Longs.toArray(data);
+		byte[] maskLengthRow = { 0, 0, 0, 0, 0, 0, (byte) ( ( getMaskLength() & 0xff00 ) >>> 8 ), (byte) ( getMaskLength() & 0x00ff ) };
+		long[] rm = Longs.toArray(returnMask);
+		byte[] byteArray = Bytes.concat( Utils.toByteArray(d), maskLengthRow, Utils.toByteArray(rm) );
 		return byteArray;
 	}
 	

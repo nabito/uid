@@ -2,7 +2,6 @@ package com.dadfha.uid.server;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +22,7 @@ public class DataEntry {
 		private static Map<Short, DataAttribute> table = new HashMap<Short, DataAttribute>();
 		
 		static {
-			for(DataAttribute da : EnumSet.allOf(DataAttribute.class)) {
+			for(DataAttribute da : DataAttribute.values()) {
 				table.put(da.getCode(), da);
 			}
 		}
@@ -59,7 +58,7 @@ public class DataEntry {
 		private static Map<Short, DataType> table = new HashMap<Short, DataType>();
 		
 		static {
-			for(DataType dt : EnumSet.allOf(DataType.class)) {
+			for(DataType dt : DataType.values()) {
 				table.put(dt.getCode(), dt);
 			}
 		}		
