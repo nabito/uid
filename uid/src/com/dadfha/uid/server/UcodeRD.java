@@ -1,5 +1,6 @@
 package com.dadfha.uid.server;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -24,8 +25,16 @@ public class UcodeRD {
 	 * @param dbUcode
 	 * @return DataFile
 	 */
-	public DataFile getDataFile(Ucode dbUcode) {
+	public final DataFile getDataFile(Ucode dbUcode) {		
 		return ucodeSpace.get(dbUcode);
+	}
+	
+	/**
+	 * Get DataType Collection view
+	 * @return Collection<DataFile>
+	 */
+	public final Collection<DataFile> getDataFilesView() {
+		return ucodeSpace.values();
 	}
 	
 	/**
@@ -33,21 +42,21 @@ public class UcodeRD {
 	 * @param dbUcode
 	 * @param file
 	 */
-	public void setDataFile(Ucode dbUcode, DataFile file) {
+	public final void setDataFile(Ucode dbUcode, DataFile file) {
 		ucodeSpace.put(dbUcode, file);
 		System.gc();
 	}
 	
-	public void addDataFile(DataFile file) {
+	public final void addDataFile(DataFile file) {
 		ucodeSpace.put(file.getDbUcode(), file);
 	}
 	
-	public void deleteDataFile(Ucode dbUcode) {
+	public final void deleteDataFile(Ucode dbUcode) {
 		ucodeSpace.remove(dbUcode);
 		System.gc();
 	}
 	
-	public void clearDataFile() {
+	public final void clearDataFile() {
 		ucodeSpace.clear();
 		System.gc();
 	}
@@ -57,7 +66,7 @@ public class UcodeRD {
 	 * @param ucode
 	 * @return Ucode The DB ucode of first Data File found covering the supplied ucode or null if not found 
 	 */
-	public Ucode isInSpace(Ucode ucode) {
+	public final Ucode isInSpace(Ucode ucode) {
 		Ucode dbUcode = null;
 		DataFile df = null;
 		Iterator<DataFile> i = ucodeSpace.values().iterator();

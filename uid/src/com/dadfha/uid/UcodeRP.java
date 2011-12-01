@@ -1,13 +1,15 @@
 package com.dadfha.uid;
 
-import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import com.dadfha.uid.ResUcdQuery.QueryAttribute;
 import com.dadfha.uid.ResUcdQuery.QueryMode;
 import com.dadfha.uid.ResUcdQuery.ResUcdQueryField;
 import com.dadfha.uid.UrpQuery.Command;
+import com.dadfha.uid.server.DataEntry;
+import com.dadfha.uid.server.DataFile;
 import com.dadfha.uid.server.UcodeRD;
 
 /**
@@ -79,15 +81,29 @@ public class UcodeRP {
 	 * Check if query if of RES_UCD command then call an appropriate method and return requested data (if any)
 	 * @param packet
 	 * @return Object requested data (if any) or null for nothing
+	 * 
+	 * Command			Return type
+	 * RES_UCD			ResUcdRecieve
 	 */
 	public final Object processQuery(UrpQuery packet) {
 		
 		switch( packet.getCommandId() ) {
 			case RES_UCD:
-				ResUcdQuery ruqPacket  = (ResUcdQuery) packet;
+				ResUcdQuery ruqPacket = (ResUcdQuery) packet;
+				
+				Iterator<Ucode> i = ruqPacket.getUcodeList().iterator();
+				Iterator<UcodeMask> j = ruqPacket.getUcodeMaskList().iterator();
+				DataEntry entry = null;
+				// TODO construct response packet
+				//ResUcdRecieve rurPacket = new ResUcdRecieve(ttl, dataversion, resolveMode, ... ); 
+				while(i.hasNext() && j.hasNext()) {
+					entry = resolveUcode(i.next(), j.next(), ruqPacket.getQueryAttribute());
+					
+				}
+				
 				// TODO get list of ucode (and mask?) iterate through it, resolve info
 				// return ResUcdRecieve obj with resolve data as a result
-				//return resolveUcode(ruqPacket);
+				
 				break;
 			default: break;
 		}
@@ -95,9 +111,30 @@ public class UcodeRP {
 		return null;
 	}
 	
-	public final byte[] resolveUcode(Ucode code) {
-		// TODO look in database, get requested attribute, throws Exception if the database is null
-		// new NullPointerException("Database of type UcodeRD must not be null.");
+	public final DataEntry resolveUcode(Ucode code, UcodeMask mask, QueryAttribute attribute) {
+		// Check if database has properly initialized
+		if(database == null) throw new NullPointerException("Database of type UcodeRD must not be null.");
+		
+		Iterator<DataFile> i = database.getDataFilesView().iterator();
+		DataFile file = null;
+		boolean isMatched = false;
+		
+		// Search for matching criteria of a data file (Specification page 12)
+		// (queryucode & querymask & dbmask) equals (dbucode & querymask & dbmask)
+		while(i.hasNext()) {
+			file = i.next();
+			isMatched = code
+					.bitwiseAND(mask)
+					.bitwiseAND(file.getDbMask())
+					.equals(file.getDbUcode().bitwiseAND(mask)
+							.bitwiseAND(file.getDbMask())); 
+			if(isMatched) break;
+		}
+		// If no data file is matched, return null as the result
+		if(!isMatched) return null; 
+		
+		// TODO search for matching Data Entry within file...
+		
 		
 		return null;
 	}

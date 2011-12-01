@@ -3,6 +3,7 @@ package com.dadfha.uid;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -201,10 +202,23 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
+	 * Create a new list of Ucode from queryucode list
+	 * @return List<Ucode>
+	 */
+	public final List<Ucode> getUcodeList() {
+		List<Ucode> ucodeList = new ArrayList<Ucode>(); 
+		Iterator<Long> i = queryUcode.iterator();
+		while(i.hasNext()) {
+			ucodeList.add( new Ucode( i.next(), i.next() ) );
+		}
+		return ucodeList;
+	}	
+	
+	/**
 	 * Get unmodifiable view of raw queryucode List
 	 * @return List<Long>
 	 */
-	public final List<Long> getQueryUcode() {
+	public final List<Long> getQueryUcodeList() {
 		return Collections.unmodifiableList(queryUcode);		
 	}
 	
@@ -253,10 +267,23 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
+	 * Create a new list of UcodeMask from querymask list
+	 * @return List<UcodeMask>
+	 */
+	public final List<UcodeMask> getUcodeMaskList() {
+		List<UcodeMask> maskList = new ArrayList<UcodeMask>(); 
+		Iterator<Long> i = queryMask.iterator();
+		while(i.hasNext()) {
+			maskList.add( new UcodeMask( i.next(), i.next() ) );
+		}
+		return maskList;
+	}
+	
+	/**
 	 * Get unmodifiable view of raw querymask List
 	 * @return List<Long>
 	 */
-	public final List<Long> getQueryMask() {
+	public final List<Long> getQueryMaskList() {
 		return Collections.unmodifiableList(queryMask);		
 	}	
 	

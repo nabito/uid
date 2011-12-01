@@ -1,5 +1,6 @@
 package com.dadfha.uid;
 
+// FIXME consider removing this class and use just Ucode type instead
 public class UcodeMask extends Ucode {
 	
 	public UcodeMask(long highBits, long lowBits) {
