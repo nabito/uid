@@ -1,9 +1,7 @@
 package com.dadfha.uid;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -96,7 +94,23 @@ public final class ResUcdQuery extends UrpQuery {
 	private final List<Long> queryUcode = new ArrayList<Long>();
 	private final List<Long> queryMask = new ArrayList<Long>();
 	
-	public ResUcdQuery(int t, QueryMode queryMode, QueryAttribute queryAttribute, short ucodeType, short ucodeLength) {
+	/**
+	 * Construct ResUcdQuery packet with default values as followed:
+	 * 
+	 * Property			Value
+	 * t				0
+	 * querymode		UIDC_RSMODE_RESOLUTION
+	 * queryattribute	UIDC_ATTR_RS
+	 * ucodetype		UID_128
+	 * ucodelength		0
+	 * 
+	 * meaning the resolution for another ucode resolution server IPv4 address
+	 */
+	public ResUcdQuery() {
+		this(0, QueryMode.UIDC_RSMODE_RESOLUTION, QueryAttribute.UIDC_ATTR_RS, UcodeType.UID_128, (short) 0);
+	}
+	
+	public ResUcdQuery(int t, QueryMode queryMode, QueryAttribute queryAttribute, UcodeType ucodeType, short ucodeLength) {
 		int temp;
 		
 		// Initialize all fields
@@ -108,7 +122,7 @@ public final class ResUcdQuery extends UrpQuery {
 		assert temp == ResUcdQueryField.QUERY_MODE.getByteIndex();
 		temp = addShort(queryAttribute.getCode());
 		assert temp == ResUcdQueryField.QUERY_ATTRIBUTE.getByteIndex();
-		temp = addShort(ucodeType);
+		temp = addShort(ucodeType.getCode());
 		assert temp == ResUcdQueryField.UCODE_TYPE.getByteIndex();
 		temp = addShort(ucodeLength);
 		assert temp == ResUcdQueryField.UCODE_LENGTH.getByteIndex();
@@ -168,10 +182,13 @@ public final class ResUcdQuery extends UrpQuery {
 	/**
 	 * Get Ucode type
 	 * @return UcodeType
+	 * @throws RuntimeException when ucode type value not recognized
 	 */
 	public final UcodeType getUcodeType() {
 		short type = getData(ResUcdQueryField.UCODE_TYPE.getByteIndex());
-		return UcodeType.valueOf(type);		
+		UcodeType ut = UcodeType.valueOf(type);
+		if(ut == null) throw new RuntimeException("The ucode type field cannot be recognized.");
+		return ut;	
 	}
 	
 	/**
@@ -202,28 +219,16 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
-	 * Create a new list of Ucode from queryucode list
-	 * @return List<Ucode>
+	 * Get the ucode associated with the packet
+	 * @return Ucode
 	 */
-	public final List<Ucode> getUcodeList() {
-		List<Ucode> ucodeList = new ArrayList<Ucode>(); 
-		Iterator<Long> i = queryUcode.iterator();
-		while(i.hasNext()) {
-			ucodeList.add( new Ucode( i.next(), i.next() ) );
-		}
-		return ucodeList;
+	public final Ucode getQueryUcode() {
+		Ucode code = new Ucode(Longs.toArray(queryUcode), getUcodeType()); 
+		return code;
 	}	
 	
 	/**
-	 * Get unmodifiable view of raw queryucode List
-	 * @return List<Long>
-	 */
-	public final List<Long> getQueryUcodeList() {
-		return Collections.unmodifiableList(queryUcode);		
-	}
-	
-	/**
-	 * Get a 128-bit query ucode
+	 * Get query ucode in 128-bit chunk
 	 * @param index added sequence of ucode  
 	 * @return long[] the query ucode in little endian order
 	 * @throws Exception when the index of query ucode is odd number
@@ -235,7 +240,7 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
-	 * Update a 128-bit query ucode
+	 * Update query ucode in 128-bit chunk
 	 * @param index
 	 * @param dataLow lower 64-bit data of ucode
 	 * @param dataHigh higher 64-bit data of ucode
@@ -248,7 +253,7 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
-	 * Add query ucode and its mask bits
+	 * Add query ucode and its mask bits in 128-bit chunk
 	 * @param ucodeLow lower 64-bit data of ucode
 	 * @param ucodeHigh higher 64-bit data of ucode
 	 * @param maskLow lower 64-bit data of mask
@@ -267,28 +272,16 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
-	 * Create a new list of UcodeMask from querymask list
-	 * @return List<UcodeMask>
+	 * Get the querymask associated with the packet
+	 * @return Ucode
 	 */
-	public final List<Ucode> getUcodeMaskList() {
-		List<Ucode> maskList = new ArrayList<Ucode>(); 
-		Iterator<Long> i = queryMask.iterator();
-		while(i.hasNext()) {
-			maskList.add( new Ucode( i.next(), i.next() ) );
-		}
-		return maskList;
-	}
+	public final Ucode getQueryMask() {
+		Ucode mask = new Ucode(Longs.toArray(queryMask), getUcodeType()); 
+		return mask;
+	}		
 	
 	/**
-	 * Get unmodifiable view of raw querymask List
-	 * @return List<Long>
-	 */
-	public final List<Long> getQueryMaskList() {
-		return Collections.unmodifiableList(queryMask);		
-	}	
-	
-	/**
-	 * Get a query mask
+	 * Get query mask in 128-bit chunk
 	 * @param index added sequence of ucode NOT of the mask
 	 * @return long[] the query mask in little Endian order
 	 * @throws Exception 
@@ -300,7 +293,7 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
-	 * Update a query mask associated with a ucode
+	 * Update query mask associated with a ucode in 128-bit chunk
 	 * @param index added sequence of ucode NOT of the mask
 	 * @param dataLow lower 64-bit data of mask
 	 * @param dataHigh higher 64-bit data of mask

@@ -1,56 +1,82 @@
 package com.dadfha.uid;
 
+import java.util.Arrays;
+
+import com.dadfha.uid.UcodeRP.UcodeType;
+
+/**
+ * ucode of variable size
+ * @author Wirawit
+ *
+ */
 public class Ucode implements Comparable<Ucode> {
 	
-	long highBits;
-	long lowBits;
-		
+	private long[] data;
+	public final UcodeType type;
+	
+	/**
+	 * Construct Ucode with specified Ucode Type (128, 256, 512, or 1024 bits)
+	 * by copying supplied array value
+	 * @param code in Big Endian byte order
+	 * @param type
+	 */
+	public Ucode(long[] code, UcodeType type) {
+		int arraySize = ( 128 * (int) Math.pow(2.0, ( type.getCode() - 1 ) ) ) / Long.SIZE;
+		data = new long[arraySize];
+		System.arraycopy(code, 0, data, 0, arraySize);
+		this.type = type;
+	}
+	
+	/**
+	 * Construct 128-bit ucode
+	 * @param highBits
+	 * @param lowBits
+	 */
 	public Ucode(long highBits, long lowBits) {
-		this.highBits = highBits;
-		this.lowBits = lowBits;
-	}
-	
-	public final long getLowBits() {
-		return lowBits;
-	}
-	
-	public final void setLowBits(long lowBits) {
-		this.lowBits = lowBits;
-	}
-	
-	public final long getHighBits() {
-		return highBits;
-	}
-	
-	public final void setHighBits(long highBits) {
-		this.highBits = highBits;
-	}
-	
-	public final long[] getBitsArray() {
 		long[] l = { highBits, lowBits };
-		return l;
+		data = l;
+		type = UcodeType.UID_128;
 	}
 	
-	public final void setBits(long highBits, long lowBits) {
-		this.highBits = highBits;
-		this.lowBits = lowBits;
+	/**
+	 * Get a copy of array containing ucode bits data
+	 * @return long[]
+	 */
+	public final long[] getBitsArray() {
+		long[] copy = new long[data.length];
+		System.arraycopy(data, 0, copy, 0, data.length);
+		return copy;
+	}
+	
+	/**
+	 * Make copy of bits from supplied parameter to ucode
+	 * @param bits
+	 */
+	public final void setBitsArray(long[] bits) {
+		if(bits.length != data.length) throw new RuntimeException("Size of ucode does not match");
+		System.arraycopy(bits, 0, data, 0, bits.length);		
 	}
 	
 	/**
 	 * Bitwise AND operator for Ucode type
 	 * @param code
-	 * @return Ucode
+	 * @return Ucode new Ucode object after bitwise AND operation
 	 */
 	public final Ucode bitwiseAND(Ucode code) {
+		if(code.type != type) throw new RuntimeException("Type of ucode does not match");
 		long[] l = code.getBitsArray();
-		l[0] = l[0] & highBits;
-		l[1] = l[1] & lowBits;
-		return new Ucode(l[0], l[1]);
+		
+		for(int i = 0; i < data.length; i++) {
+			l[i] = l[i] & data[i];
+		}
+		return new Ucode(l, type);
 	}	
 	
 	@Override
 	public String toString() {
-		return String.format("%x", highBits) + String.format("%x", lowBits);
+		StringBuilder sb = new StringBuilder();
+		for(long bits : data) sb.append(String.format("%x", bits));
+		return sb.toString();
 	}
 
 	/* (non-Javadoc)
@@ -60,8 +86,8 @@ public class Ucode implements Comparable<Ucode> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (int) (highBits ^ (highBits >>> 32));
-		result = prime * result + (int) (lowBits ^ (lowBits >>> 32));
+		result = prime * result + Arrays.hashCode(data);
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
 	}
 
@@ -77,9 +103,9 @@ public class Ucode implements Comparable<Ucode> {
 		if (getClass() != obj.getClass())
 			return false;
 		Ucode other = (Ucode) obj;
-		if (highBits != other.highBits)
+		if (!Arrays.equals(data, other.data))
 			return false;
-		if (lowBits != other.lowBits)
+		if (type != other.type)
 			return false;
 		return true;
 	}

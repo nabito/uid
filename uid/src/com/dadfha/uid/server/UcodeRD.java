@@ -7,7 +7,7 @@ import java.util.TreeMap;
 
 import com.dadfha.uid.Ucode;
 
-//TODO  soon use Cassandra DB
+// OPT soon use Cassandra DB
 
 /**
  * ucode Resolution Database

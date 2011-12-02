@@ -191,7 +191,15 @@ public class DataEntry {
 		}		
 		List<Byte> l = Bytes.asList(byteData);
 		this.data.addAll(l);
-	}		
+	}
+	
+	/**
+	 * Get all data in byte array format
+	 * @return byte[]
+	 */
+	public final byte[] getData() {
+		return Bytes.toArray(data);
+	}
 	
 	public final byte getData(int index) {
 		return data.get(index);

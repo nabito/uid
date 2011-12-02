@@ -7,10 +7,10 @@ import java.util.Map;
 public class UrpRecieve extends UrpPacket {
 	
 	public enum Error {
-		E_UIDC_OK		( (short) 0x0000 ),
-		E_UIDC_NOSPT	( (short) 0xffef ),
-		E_UIDC_PAR		( (short) 0xffdf ),
-		E_UIDC_NOEXS	( (short) 0xffcc );
+		E_UIDC_OK		( (short) 0x0000 ),		/** Resolved successfully */
+		E_UIDC_NOSPT	( (short) 0xffef ),		/** Unsupported function */
+		E_UIDC_PAR		( (short) 0xffdf ),		/** Parameter error */
+		E_UIDC_NOEXS	( (short) 0xffcc );		/** Entry nonexistence */
 		
 		private short code;
 		private static final Map<Short, Error> table = new HashMap<Short, Error>();

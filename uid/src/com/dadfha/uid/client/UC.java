@@ -25,6 +25,10 @@ public class UC {
 		
 	}
 	
+	public static void main(String[] args) {
+		
+	}
+	
 	// TODO make support for InetAddress connection and add the sendUcode, readUcodeTag and mock-up main 
 	/**
 	 * Connect to UCR Server

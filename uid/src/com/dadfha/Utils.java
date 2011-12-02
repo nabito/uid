@@ -5,12 +5,21 @@ import java.util.Arrays;
 public class Utils {
 	
 	/**
+	 * Give int value of byte when treat as unsigned 
+	 * @param unsigned
+	 * @return
+	 */
+	public static final int ubyteToInt(byte b) {
+		return Integer.parseInt(String.format("%x", b), 16);
+	}
+	
+	/**
 	 * Array concatenation of generic type object array of two
 	 * @param first
 	 * @param second
 	 * @return <T> T[]
 	 */
-	public static <T> T[] concat(T[] first, T[] second) {
+	public static final <T> T[] concat(T[] first, T[] second) {
 		T[] result = Arrays.copyOf(first, first.length + second.length);
 		System.arraycopy(second, 0, result, first.length, second.length);
 		return result;
@@ -22,7 +31,7 @@ public class Utils {
 	 * @param rest
 	 * @return <T> T[]
 	 */
-	public static <T> T[] concatAll(T[] first, T[]... rest) {
+	public static final <T> T[] concatAll(T[] first, T[]... rest) {
 		int totalLength = first.length;
 		for (T[] array : rest) {
 			totalLength += array.length;
@@ -42,7 +51,7 @@ public class Utils {
 	 * @param longArray
 	 * @return Byte[] containing copy of data from longArray
 	 */
-	public static byte[] toByteArray(long[] longArray) {
+	public static final byte[] toByteArray(long[] longArray) {
 		byte[] byteArray = new byte[longArray.length * 8];
 		int i = 0;
 		for(long l : longArray) {			

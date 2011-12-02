@@ -4,10 +4,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.dadfha.Utils;
 import com.dadfha.uid.ResUcdQuery.QueryAttribute;
 import com.dadfha.uid.ResUcdQuery.QueryMode;
 import com.dadfha.uid.ResUcdQuery.ResUcdQueryField;
+import com.dadfha.uid.ResUcdRecieve.ResolveMode;
 import com.dadfha.uid.UrpQuery.Command;
+import com.dadfha.uid.UrpRecieve.Error;
 import com.dadfha.uid.server.DataEntry;
 import com.dadfha.uid.server.DataEntry.DataAttribute;
 import com.dadfha.uid.server.DataFile;
@@ -88,28 +91,39 @@ public class UcodeRP {
 	 */
 	public final Object processQuery(UrpQuery packet) {
 		
+		ResUcdQuery ruqPacket = (ResUcdQuery) packet;
+		ResUcdRecieve rurPacket = null;
+		
+		// Construct response packet
+		rurPacket = new ResUcdRecieve();
+		rurPacket.setSerialNumber( (byte) ( Utils.ubyteToInt( ruqPacket.getSerialNumber() ) + 1 ) );
+		rurPacket.setResolveMode( ResolveMode.valueOf( ruqPacket.getQueryMode().getCode() ) );		
+		
 		switch( packet.getCommandId() ) {
 			case RES_UCD:
-				ResUcdQuery ruqPacket = (ResUcdQuery) packet;
 				
-				Iterator<Ucode> i = ruqPacket.getUcodeList().iterator();
-				Iterator<Ucode> j = ruqPacket.getUcodeMaskList().iterator();
-				DataEntry entry = null;
-				// TODO construct response packet
-				//ResUcdRecieve rurPacket = new ResUcdRecieve(ttl, dataversion, resolveMode, ... ); 
-				while(i.hasNext() && j.hasNext()) {
-					entry = resolveUcode(i.next(), j.next(), ruqPacket.getQueryAttribute());
+				// Resolve request ucode(s)				
+				 DataEntry entry = resolveUcode(ruqPacket.getQueryUcode(), ruqPacket.getQueryMask(), ruqPacket.getQueryAttribute());
 					
-				}
-				
-				// TODO get list of ucode (and mask?) iterate through it, resolve info
-				// return ResUcdRecieve obj with resolve data as a result
-				
+				// Set error code
+				if(entry != null) {
+					rurPacket.setErrorCode(Error.E_UIDC_OK);
+					rurPacket.setTTL(entry.getTTL());
+					rurPacket.setDataVersion(entry.getDataVersion());
+					rurPacket.setDataAttribute(entry.getDataAttribute());
+					rurPacket.setDataType(entry.getDataType());
+					rurPacket.addResUcdData(entry.getData());
+					rurPacket.addMask(entry.getUcodeMask().getBitsArray());
+				} else { // In case entry is null (Indicating either no data file or data entry matched)
+					rurPacket.setErrorCode(Error.E_UIDC_NOEXS);
+				}		
 				break;
-			default: break;
+				
+			default: 
+				break;
 		}
 		
-		return null;
+		return rurPacket;
 	}
 	
 	public final DataEntry resolveUcode(Ucode code, Ucode mask, QueryAttribute attribute) {
@@ -193,18 +207,21 @@ public class UcodeRP {
 		QueryAttribute attribute = QueryAttribute.valueOf( (short) ( ( buffer[ResUcdQueryField.QUERY_ATTRIBUTE.getByteIndex()] << 8 ) | 
 																	( buffer[ResUcdQueryField.QUERY_ATTRIBUTE.getByteIndex() + 1] ) ) );
 		
-		short ucodeType = (short) ( (buffer[ResUcdQueryField.UCODE_TYPE.getByteIndex()] << 8 ) | ( buffer[ResUcdQueryField.UCODE_TYPE.getByteIndex() + 1] ) );
+		UcodeType ucodeType = UcodeType.valueOf( (short) ( (buffer[ResUcdQueryField.UCODE_TYPE.getByteIndex()] << 8 ) | ( buffer[ResUcdQueryField.UCODE_TYPE.getByteIndex() + 1] ) ) );
+				
 		short ucodeLength = (short) ( (buffer[ResUcdQueryField.UCODE_LENGTH.getByteIndex()] << 8 ) | ( buffer[ResUcdQueryField.UCODE_LENGTH.getByteIndex() + 1] ) );
 		
 		// Construct query packet
 		ResUcdQuery packet = new ResUcdQuery(t, mode, attribute, ucodeType, ucodeLength);
-		
-		
-		
+				
 		packet.setSerialNumber(buffer[UrpPacket.Field.SERIAL_NO.getByteIndex()]);
 		short commandId = (short) ( ( buffer[UrpPacket.Field.OPERATOR_HIGH.getByteIndex()] << 8 ) | buffer[UrpPacket.Field.OPERATOR_HIGH.getByteIndex()] );		
 		packet.setCommandId(Command.valueOf(commandId));
-		// TODO set all parameters by add setData(buffer, index) for best performance!
+		
+		// TODO add data from buffer!
+		//packet.addQuery(ucodeLow, ucodeHigh, maskLow, maskHigh);
+		
+		// OPT set all parameters by add setData(buffer, index) for best performance!
 		
 		return packet;
 	}
