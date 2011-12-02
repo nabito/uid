@@ -7,6 +7,8 @@ import java.util.TreeMap;
 
 import com.dadfha.uid.Ucode;
 
+//TODO  soon use Cassandra DB
+
 /**
  * ucode Resolution Database
  * @author nabito
@@ -30,14 +32,6 @@ public class UcodeRD {
 	}
 	
 	/**
-	 * Get DataType Collection view
-	 * @return Collection<DataFile>
-	 */
-	public final Collection<DataFile> getDataFilesView() {
-		return ucodeSpace.values();
-	}
-	
-	/**
 	 * Update Data File based on DB ucode
 	 * @param dbUcode
 	 * @param file
@@ -45,8 +39,8 @@ public class UcodeRD {
 	public final void setDataFile(Ucode dbUcode, DataFile file) {
 		ucodeSpace.put(dbUcode, file);
 		System.gc();
-	}
-	
+	}	
+		
 	public final void addDataFile(DataFile file) {
 		ucodeSpace.put(file.getDbUcode(), file);
 	}
@@ -54,12 +48,20 @@ public class UcodeRD {
 	public final void deleteDataFile(Ucode dbUcode) {
 		ucodeSpace.remove(dbUcode);
 		System.gc();
-	}
+	}	
 	
 	public final void clearDataFile() {
 		ucodeSpace.clear();
 		System.gc();
-	}
+	}	
+	
+	/**
+	 * Get DataType Collection view
+	 * @return Collection<DataFile>
+	 */
+	public final Collection<DataFile> getDataFilesView() {
+		return ucodeSpace.values();
+	}	
 	
 	/**
 	 * Check if a ucode is in range of any managed Data File(s) 

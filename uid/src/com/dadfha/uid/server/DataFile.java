@@ -1,13 +1,12 @@
 package com.dadfha.uid.server;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
 import com.dadfha.uid.Ucode;
 import com.dadfha.uid.UcodeMask;
 
-
-// TODO  soon to create Cassandra DB
 /**
  * Data File for ucode store 
  * @author nabito
@@ -109,6 +108,14 @@ public class DataFile {
 	public final void clearDataEntry() {
 		dataEntry.clear();
 		System.gc();
+	}
+	
+	/**
+	 * Get DataEntry Collection view
+	 * @return Collection<DataEntry>
+	 */
+	public final Collection<DataEntry> getDataEntriesView() {
+		return dataEntry.values();
 	}
 	
 	/**

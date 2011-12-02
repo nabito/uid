@@ -9,6 +9,7 @@ import com.dadfha.uid.ResUcdQuery.QueryMode;
 import com.dadfha.uid.ResUcdQuery.ResUcdQueryField;
 import com.dadfha.uid.UrpQuery.Command;
 import com.dadfha.uid.server.DataEntry;
+import com.dadfha.uid.server.DataEntry.DataAttribute;
 import com.dadfha.uid.server.DataFile;
 import com.dadfha.uid.server.UcodeRD;
 
@@ -117,26 +118,66 @@ public class UcodeRP {
 		
 		Iterator<DataFile> i = database.getDataFilesView().iterator();
 		DataFile file = null;
-		boolean isMatched = false;
+		boolean isSpaceMatched = false;
 		
 		// Search for matching criteria of a data file (Specification page 12)
 		// (queryucode & querymask & dbmask) equals (dbucode & querymask & dbmask)
 		while(i.hasNext()) {
 			file = i.next();
-			isMatched = code
+			isSpaceMatched = code
 					.bitwiseAND(mask)
 					.bitwiseAND(file.getDbMask())
 					.equals(file.getDbUcode().bitwiseAND(mask)
 							.bitwiseAND(file.getDbMask())); 
-			if(isMatched) break;
+			if(isSpaceMatched) break;
 		}
 		// If no data file is matched, return null as the result
-		if(!isMatched) return null; 
+		if(!isSpaceMatched) return null; 
 		
-		// TODO search for matching Data Entry within file...
+		// Search for matching Data Entry within selected file (Specification page 12)
+		// (queryucode & querymask & ucodemask) equals (ucode & querymask & ucodemask) 
+		// and (querymask & ucodemask) equals ucodemask
+		Iterator<DataEntry> j = file.getDataEntriesView().iterator();
+		DataEntry entry = null;
+		DataEntry resolutionEntry = null;
+		isSpaceMatched = false;
+
+		while (j.hasNext()) {
+			entry = j.next();
+			isSpaceMatched = (code.bitwiseAND(mask).bitwiseAND(
+					entry.getUcodeMask()).equals(entry.getUcode()
+					.bitwiseAND(mask).bitwiseAND(entry.getUcodeMask())))
+					&& (mask.bitwiseAND(entry.getUcodeMask()).equals(entry
+							.getUcodeMask()));
+
+			if (isSpaceMatched) {
+
+				// Choose any data entry if query attribute is
+				// UIDC_ATTR_ANONYMOUS
+				if (attribute.equals(QueryAttribute.UIDC_ATTR_ANONYMOUS))
+					return entry;
+
+				// Further check if the query attribute matches one in the entry
+				else if (attribute.getCode() == entry.getDataAttribute()
+						.getCode())
+					return entry;
+
+				// Remember entry with UIDC_ATTR_RS for resolution redirect if
+				// requested attribute not found
+				else if (entry.getDataAttribute().equals(
+						DataAttribute.UIDC_ATTR_RS))
+					resolutionEntry = entry;
+			}
+
+		}
+		// If not even a data entry's space is matched: return null, if space is
+		// matched but not attribute: redirect to another resolution server (if any)
+		return resolutionEntry; // This expression is correct ONLY if
+								// 'resolutionEntry' would still be null if no
+								// space matched, or space matched but no
+								// attribute matched with either UIDC_ATTR_RS
+								// entry found or not
 		
-		
-		return null;
 	}
 	
 	public final UrpPacket parseQueryPacket(byte[] buffer) {
