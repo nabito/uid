@@ -11,7 +11,6 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
 import com.dadfha.uid.Ucode;
-import com.dadfha.uid.UcodeMask;
 import com.dadfha.uid.server.DataEntry.DataAttribute;
 import com.dadfha.uid.server.DataEntry.DataType;
 import com.dadfha.uid.server.DataFile.CascadeMode;
@@ -60,10 +59,10 @@ public class UcodeRS {
 	 */
 	public void initMockDbData() {
 		
-		DataFile file1 = new DataFile(new Ucode(0x0efffec000000000L, 0x0000000000040000L), new UcodeMask(0xffffffffffffffffL, 0xffffffffffff0000L), CascadeMode.UIDC_NOCSC);
+		DataFile file1 = new DataFile(new Ucode(0x0efffec000000000L, 0x0000000000040000L), new Ucode(0xffffffffffffffffL, 0xffffffffffff0000L), CascadeMode.UIDC_NOCSC);
 		try {
 			file1.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050100L),
-												new UcodeMask(0xffffffffffffffffL, 0xffffffffffffff00L),	
+												new Ucode(0xffffffffffffffffL, 0xffffffffffffff00L),	
 												DataAttribute.UIDC_ATTR_SS,
 												(short) 1,
 												0,
@@ -71,7 +70,7 @@ public class UcodeRS {
 												"http://www.uidcenter.org") );
 			
 			file1.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050200L),
-					new UcodeMask(0xffffffffffffffffL, 0xffffffffffffff00L),	
+					new Ucode(0xffffffffffffffffL, 0xffffffffffffff00L),	
 					DataAttribute.UIDC_ATTR_RS,
 					(short) 1,
 					3600,
@@ -79,7 +78,7 @@ public class UcodeRS {
 					"192.168.10.1") );	
 			
 			file1.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050300L),
-					new UcodeMask(0xffffffffffffffffL, 0xffffffffffffff00L),	
+					new Ucode(0xffffffffffffffffL, 0xffffffffffffff00L),	
 					DataAttribute.UIDC_ATTR_RS,
 					(short) 2,
 					0,
@@ -89,7 +88,7 @@ public class UcodeRS {
 		} catch (Exception e) {
 			// Return message to user that the the supplied ucode is not supported in this space
 		}
-		DataFile file2 = new DataFile(new Ucode(0x0efffec000000000L, 0x0000000000050000L), new UcodeMask(0xffffffffffffffffL, 0xffffffffffff0000L), CascadeMode.UIDC_CSC);
+		DataFile file2 = new DataFile(new Ucode(0x0efffec000000000L, 0x0000000000050000L), new Ucode(0xffffffffffffffffL, 0xffffffffffff0000L), CascadeMode.UIDC_CSC);
 		database.addDataFile(file1);
 		database.addDataFile(file2);				
 		

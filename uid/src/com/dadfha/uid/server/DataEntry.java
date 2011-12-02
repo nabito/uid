@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.dadfha.uid.Ucode;
-import com.dadfha.uid.UcodeMask;
 import com.google.common.primitives.Bytes;
 
 public class DataEntry {
@@ -77,7 +76,7 @@ public class DataEntry {
 	}
 	
 	private Ucode ucode;
-	private UcodeMask ucodeMask;
+	private Ucode ucodeMask;
 	private short dataVersion;
 	private int ttl;	
 	/**
@@ -87,11 +86,11 @@ public class DataEntry {
 	private DataType dataType;
 	private final List<Byte> data = new ArrayList<Byte>();
 	
-	public DataEntry(Ucode ucode, UcodeMask ucodeMask, DataAttribute attribute, short dataVersion, int ttl, DataType dataType) {
+	public DataEntry(Ucode ucode, Ucode ucodeMask, DataAttribute attribute, short dataVersion, int ttl, DataType dataType) {
 		this(ucode, ucodeMask, attribute, dataVersion, ttl, dataType, null);
 	}
 	
-	public DataEntry(Ucode ucode, UcodeMask ucodeMask, DataAttribute attribute, short dataVersion, int ttl, DataType dataType, String stringData) {
+	public DataEntry(Ucode ucode, Ucode ucodeMask, DataAttribute attribute, short dataVersion, int ttl, DataType dataType, String stringData) {
 		this.ucode = ucode;
 		this.ucodeMask = ucodeMask;
 		this.attribute = attribute;
@@ -110,11 +109,11 @@ public class DataEntry {
 		System.gc();
 	}
 	
-	public final UcodeMask getUcodeMask() {
+	public final Ucode getUcodeMask() {
 		return ucodeMask;
 	}
 	
-	public final void setUcodeMask(UcodeMask mask) {
+	public final void setUcodeMask(Ucode mask) {
 		ucodeMask = mask;
 		System.gc();
 	}

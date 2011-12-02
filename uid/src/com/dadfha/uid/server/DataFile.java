@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.dadfha.uid.Ucode;
-import com.dadfha.uid.UcodeMask;
 
 /**
  * Data File for ucode store 
@@ -30,11 +29,11 @@ public class DataFile {
 	}
 	
 	private Ucode dbUcode;
-	private UcodeMask dbMask;
+	private Ucode dbMask;
 	private CascadeMode cascadeMode;
 	private final Map<Ucode, DataEntry> dataEntry = new TreeMap<Ucode, DataEntry>();			
 
-	public DataFile(Ucode dbUcode, UcodeMask dbMask, CascadeMode cascadeMode) {
+	public DataFile(Ucode dbUcode, Ucode dbMask, CascadeMode cascadeMode) {
 		this.dbUcode = dbUcode;
 		this.dbMask = dbMask;
 		this.cascadeMode = cascadeMode;
@@ -49,11 +48,11 @@ public class DataFile {
 		System.gc();
 	}
 	
-	public final UcodeMask getDbMask() {
+	public final Ucode getDbMask() {
 		return dbMask;
 	}
 	
-	public final void setDbMask(UcodeMask mask) {
+	public final void setDbMask(Ucode mask) {
 		dbMask = mask;
 		System.gc();
 	}
@@ -123,7 +122,7 @@ public class DataFile {
 	 * @return boolean
 	 */
 	public final boolean isInSpace(Ucode code) {
-		return ( dbMask.mask( dbUcode ).toString().equals( dbMask.mask( code ).toString() ) ) ? true : false;
+		return ( dbMask.bitwiseAND( dbUcode ).toString().equals( dbMask.bitwiseAND( code ).toString() ) ) ? true : false;
 	}
 	
 }

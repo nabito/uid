@@ -93,7 +93,7 @@ public class UcodeRP {
 				ResUcdQuery ruqPacket = (ResUcdQuery) packet;
 				
 				Iterator<Ucode> i = ruqPacket.getUcodeList().iterator();
-				Iterator<UcodeMask> j = ruqPacket.getUcodeMaskList().iterator();
+				Iterator<Ucode> j = ruqPacket.getUcodeMaskList().iterator();
 				DataEntry entry = null;
 				// TODO construct response packet
 				//ResUcdRecieve rurPacket = new ResUcdRecieve(ttl, dataversion, resolveMode, ... ); 
@@ -112,7 +112,7 @@ public class UcodeRP {
 		return null;
 	}
 	
-	public final DataEntry resolveUcode(Ucode code, UcodeMask mask, QueryAttribute attribute) {
+	public final DataEntry resolveUcode(Ucode code, Ucode mask, QueryAttribute attribute) {
 		// Check if database has properly initialized
 		if(database == null) throw new NullPointerException("Database of type UcodeRD must not be null.");
 		

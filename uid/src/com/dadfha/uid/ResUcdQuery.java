@@ -270,11 +270,11 @@ public final class ResUcdQuery extends UrpQuery {
 	 * Create a new list of UcodeMask from querymask list
 	 * @return List<UcodeMask>
 	 */
-	public final List<UcodeMask> getUcodeMaskList() {
-		List<UcodeMask> maskList = new ArrayList<UcodeMask>(); 
+	public final List<Ucode> getUcodeMaskList() {
+		List<Ucode> maskList = new ArrayList<Ucode>(); 
 		Iterator<Long> i = queryMask.iterator();
 		while(i.hasNext()) {
-			maskList.add( new UcodeMask( i.next(), i.next() ) );
+			maskList.add( new Ucode( i.next(), i.next() ) );
 		}
 		return maskList;
 	}
