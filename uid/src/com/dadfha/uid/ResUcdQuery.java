@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.dadfha.Utils;
-import com.dadfha.uid.UcodeRP.UcodeType;
+import com.dadfha.uid.Ucode.UcodeType;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 

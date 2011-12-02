@@ -1,14 +1,13 @@
 package com.dadfha.uid;
 
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import com.dadfha.Utils;
 import com.dadfha.uid.ResUcdQuery.QueryAttribute;
 import com.dadfha.uid.ResUcdQuery.QueryMode;
 import com.dadfha.uid.ResUcdQuery.ResUcdQueryField;
 import com.dadfha.uid.ResUcdRecieve.ResolveMode;
+import com.dadfha.uid.Ucode.UcodeType;
 import com.dadfha.uid.UrpQuery.Command;
 import com.dadfha.uid.UrpRecieve.Error;
 import com.dadfha.uid.server.DataEntry;
@@ -22,34 +21,6 @@ import com.dadfha.uid.server.UcodeRD;
  *
  */
 public class UcodeRP {
-	
-	public enum UcodeType {
-		UID_128		( (short) 0x0001 ),
-		UID_256		( (short) 0x0002 ),
-		UID_512		( (short) 0x0003 ),
-		UID_1024	( (short) 0x0004 );
-		
-		private short code;
-		private static Map<Short, UcodeType> table = new HashMap<Short, UcodeType>();
-		
-		static {
-			for(UcodeType t : UcodeType.values()) {
-				table.put(t.getCode(), t);
-			}
-		}
-		
-		private UcodeType(short type) {
-			this.code = type;
-		}
-		
-		public short getCode() {
-			return code;
-		}		
-		
-		public static UcodeType valueOf(short code) {
-			return table.get(code);
-		}
-	}
 	
 	private static final UcodeRP object = new UcodeRP();	
 	private UcodeRD database;
