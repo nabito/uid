@@ -1,8 +1,7 @@
 package com.dadfha.uid;
 
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +49,8 @@ public final class ResUcdRecieve extends UrpRecieve {
 		RESOLVE_MODE	( (short) 16 ),
 		DATA_ATTRIBUTE	( (short) 18 ),
 		DATA_TYPE		( (short) 20 ),
-		DATA_LENGTH		( (short) 22 );
+		DATA_LENGTH		( (short) 22 ),
+		DATA			( (short) 24 );
 		
 		private short byteIndex;
 		
@@ -65,6 +65,8 @@ public final class ResUcdRecieve extends UrpRecieve {
 	
 	private final List<Long> data = new ArrayList<Long>();
 	private final List<Long> returnMask = new ArrayList<Long>();
+	private byte[] maskRowReserved = { 0, 0, 0, 0, 0, 0 };
+	private short maskLength;
 	
 	/**
 	 * Construct ResUcdRecieve packet with default values as followed:
@@ -80,6 +82,31 @@ public final class ResUcdRecieve extends UrpRecieve {
 	 */
 	public ResUcdRecieve() {
 		this(0, (short) 0, ResolveMode.UIDC_RSMODE_RESOLUTION, DataAttribute.UIDC_ATTR_RS, DataType.UIDC_DATATYPE_UCODE_IPV4, (short) 0);
+	}
+	
+	/**
+	 * Construct ResUcdRecieve from byte array
+	 * @param buffer
+	 */
+	public ResUcdRecieve(byte[] byteArray) {
+		super(byteArray);
+		
+		// Header section
+		addBytes(byteArray, ResUcdRecieveField.TTL.getByteIndex(), ResUcdRecieveField.DATA_LENGTH.getByteIndex() + 1);
+
+		// Data section
+		addResUcdData(Arrays.copyOfRange(byteArray, ResUcdRecieveField.DATA.getByteIndex(), ResUcdRecieveField.DATA.getByteIndex() + Utils.ushortToInt(getDataLength()) - 1));
+		
+		// Mask Length row
+		int maskRowByteIndex = ResUcdRecieveField.DATA.getByteIndex() + getDataLength();
+		System.arraycopy(byteArray, maskRowByteIndex, maskRowReserved, 0, maskRowReserved.length);
+		int maskLengthByteIndex = maskRowByteIndex + maskRowReserved.length;
+		setMaskLength(byteArray[maskLengthByteIndex]);
+		
+		// Mask section
+		int returnMaskByteIndex = maskLengthByteIndex + 2;
+		addMask(Arrays.copyOfRange(byteArray, returnMaskByteIndex, returnMaskByteIndex + Utils.ushortToInt(getMaskLength()) - 1));
+		
 	}
 	
 	public ResUcdRecieve(int ttl, short dataVersion, ResolveMode mode, DataAttribute attribute, DataType type, short dataLength) {
@@ -195,14 +222,23 @@ public final class ResUcdRecieve extends UrpRecieve {
 	}
 	
 	/**
+	 * Set Data Length (byte)
+	 * @param length
+	 */
+	public final void setDataLength(short length) {
+		setData( ResUcdRecieveField.DATA_LENGTH.getByteIndex(), length );
+	}
+	
+	/**
 	 * Update the Data Length in byte
+	 * @return int Updated Data Length
 	 * @throws RuntimeException when the length data is bigger than field size
 	 */
-	private final void updateDataLength() {
+	private final int updateDataLength() {
 		int length = ( data.size() * 8 );
 		if( length > Math.pow(2, Short.SIZE) ) throw new RuntimeException("The data length value exceed the size of length field");
-		short dataLength = (short) length;
-		setData( ResUcdRecieveField.DATA_LENGTH.getByteIndex(), dataLength );
+		setData( ResUcdRecieveField.DATA_LENGTH.getByteIndex(), (short) length );
+		return length;
 	}
 	
 	/**
@@ -243,26 +279,8 @@ public final class ResUcdRecieve extends UrpRecieve {
 	 * @return int index of added data
 	 */
 	public final int addResUcdData(byte[] byteArray) {		
-		int index = data.size();
-		ByteBuffer bb = ByteBuffer.wrap(byteArray);
-		bb.clear();
-		
-		try {
-			while(bb.hasRemaining())
-				data.add(bb.getLong());
-		} catch (BufferUnderflowException e) {
-			// Check the padding needs
-			byte offset = (byte) (byteArray.length % 8);
-			int length = byteArray.length;
-			long lastLong = 0;
-			
-			// Convert byte array to long with 0 padding left
-			for(int i = length - (8 - offset); i < length; i++) {
-				lastLong |= byteArray[i] << (length - i + 1) * 8; 				
-			}
-			// Add the 0 padded long
-			data.add(lastLong);
-		}
+		int index = data.size();		
+		Utils.addBytesToLongList(byteArray, data);
 		return index;
 	}
 	
@@ -271,11 +289,31 @@ public final class ResUcdRecieve extends UrpRecieve {
 	 * @return short
 	 */
 	public final short getMaskLength() {
-		return (short) ( returnMask.size() * 8 );
+		return maskLength;
 	}
 	
 	/**
-	 * Get Return Mask
+	 * Set Mask Length (byte)
+	 * @param length
+	 */
+	public final void setMaskLength(short length) {
+		maskLength = length;
+	}
+	
+	/**
+	 * Update masklength to reflect its' current size
+	 * @return int Updated mask length
+	 * @throws RuntimeException when the length data is bigger than field size
+	 */
+	public final int updateMaskLength() {
+		int length = returnMask.size() * 8;
+		if( length > Math.pow(2, Short.SIZE) ) throw new RuntimeException("The mask length value exceed the size of length field");
+		maskLength = (short) length;
+		return length;
+	}
+	
+	/**
+	 * Get Return Mask in long unit
 	 * @param index the array index of mask
 	 * @return long the mask
 	 */
@@ -284,7 +322,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 	}
 	
 	/**
-	 * Set Return Mask
+	 * Set Return Mask in long unit
 	 * @param index the array index of mask
 	 * @param data the mask
 	 */
@@ -293,17 +331,26 @@ public final class ResUcdRecieve extends UrpRecieve {
 	}
 	
 	/**
-	 * Add Return Mask to packet
+	 * Add Return Mask to packet in long unit
 	 * @param mask
 	 * @return int index of the added mask
-	 * @throws RuntimeException when the length data is bigger than field size
 	 */
 	public final int addMask(long mask) {
 		int index = returnMask.size();
 		returnMask.add(mask);
-		int length = (index + 1) * 8;
-		if( length > Math.pow(2, Short.SIZE) ) throw new RuntimeException("The mask length value exceed the size of length field");
+		updateMaskLength();		
 		updateLength();
+		return index;		
+	}
+	
+	/**
+	 * Add Return Mask to packet from byte array
+	 * @param byteArray
+	 * @return int index of the added mask
+	 */
+	public final int addMask(byte[] byteArray) {
+		int index = returnMask.size();		
+		Utils.addBytesToLongList(byteArray, returnMask);		
 		return index;		
 	}
 	
@@ -311,25 +358,23 @@ public final class ResUcdRecieve extends UrpRecieve {
 	 * Add Return Mask to packet from long array
 	 * @param longArray
 	 * @return int index of the added mask
-	 * @throws RuntimeException when the length data is bigger than field size
 	 */
 	public final int addMask(long[] longArray) {
 		int index = returnMask.size();
 		for(long l : longArray) returnMask.add(l);
-		int length = (index + longArray.length) * 8;
-		if( length > Math.pow(2, Short.SIZE) ) throw new RuntimeException("The mask length value exceed the size of length field");
+		updateMaskLength();
 		updateLength();
 		return index;	
-	}	
+	}
 	
 	/**
 	 * Override getSubLength() to provide size counting of subclass own data storage for data and returnmask fields
-	 * @return short the length of data in 8-Octet unit
+	 * @return int the length of data in 8-Octet unit
 	 */
 	@Override
-	short getSubLength() {
+	int getSubLength() {
 		// +1 is from the row of reserved bits and masklength field
-		return (short) ( data.size() + 1 + returnMask.size() );
+		return data.size() + 1 + returnMask.size();
 	}
 	
 	/**
@@ -343,5 +388,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 		byte[] byteArray = Bytes.concat( Utils.toByteArray(d), maskLengthRow, Utils.toByteArray(rm) );
 		return byteArray;
 	}
+	
+
 	
 }

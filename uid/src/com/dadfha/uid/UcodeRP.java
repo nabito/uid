@@ -1,5 +1,6 @@
 package com.dadfha.uid;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 import com.dadfha.Utils;
@@ -97,6 +98,15 @@ public class UcodeRP {
 		return rurPacket;
 	}
 	
+	/**
+	 * Resolve ucode for Data Entry based on 3 parameters ucode, ucodemask and queryattribute
+	 * The database must be defined before being called.
+	 * @param code
+	 * @param mask
+	 * @param attribute
+	 * @return DataEntry
+	 * @throws RuntimeException when database is null
+	 */
 	public final DataEntry resolveUcode(Ucode code, Ucode mask, QueryAttribute attribute) {
 		// Check if database has properly initialized
 		if(database == null) throw new NullPointerException("Database of type UcodeRD must not be null.");
@@ -153,7 +163,6 @@ public class UcodeRP {
 						DataAttribute.UIDC_ATTR_RS))
 					resolutionEntry = entry;
 			}
-
 		}
 		// If not even a data entry's space is matched: return null, if space is
 		// matched but not attribute: redirect to another resolution server (if any)
@@ -165,7 +174,15 @@ public class UcodeRP {
 		
 	}
 	
+	/**
+	 * Parse query packet from byte buffer
+	 * @param buffer
+	 * @return UrpPacket with ResUcdQuery object
+	 */
 	public final UrpPacket parseQueryPacket(byte[] buffer) {
+		
+		// OPT set ALL parameters by buffer copy technique for best performance!
+		
 		// Extract parameters from byte array
 		int t = ( buffer[ResUcdQueryField.T.getByteIndex()] << 24 ) | 
 				( buffer[ResUcdQueryField.T.getByteIndex() + 1] << 16 ) | 
@@ -189,19 +206,23 @@ public class UcodeRP {
 		short commandId = (short) ( ( buffer[UrpPacket.Field.OPERATOR_HIGH.getByteIndex()] << 8 ) | buffer[UrpPacket.Field.OPERATOR_HIGH.getByteIndex()] );		
 		packet.setCommandId(Command.valueOf(commandId));
 		
-		// TODO add data from buffer!
-		//packet.addQuery(ucodeLow, ucodeHigh, maskLow, maskHigh);
-		
-		// OPT set all parameters by add setData(buffer, index) for best performance!
+		// Add queryucode/querymask from buffer assuming the code and mask are always of the same size
+		int queryUcodeSize = ( buffer.length - ResUcdQueryField.QUERY_UCODE.getByteIndex() ) / 2;
+		int ucodeLastByteIndex = ( ResUcdQueryField.QUERY_UCODE.getByteIndex() + queryUcodeSize ) - 1; 
+		packet.addQueryUcode(Arrays.copyOfRange(buffer, ResUcdQueryField.QUERY_UCODE.getByteIndex(), ucodeLastByteIndex));
+		packet.addQueryMask(Arrays.copyOfRange(buffer, ucodeLastByteIndex + 1, buffer.length - 1));
 		
 		return packet;
 	}
 	
-	public final UrpPacket parseRecievePacket(byte[] buffer) {
-		// TODO complete this as above fashion
-		//UrpPacket packet = new ResUcdRecievePacket();		
-		//return packet;
-		return null;
+	/**
+	 * Parse recieve packet from byte buffer
+	 * @param buffer
+	 * @return UrpPacket with ResUcdRecieve object
+	 */	
+	public final UrpPacket parseRecievePacket(byte[] buffer) {		
+		UrpPacket packet = new ResUcdRecieve(buffer);				
+		return packet;
 	}
 	
 	

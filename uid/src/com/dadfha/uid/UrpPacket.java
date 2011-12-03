@@ -41,15 +41,25 @@ public class UrpPacket {
 	
 	public UrpPacket() {
 		
-		// all array locations, equal to number of byte blocks, are all init to null
+		// All array locations, equal to number of byte blocks, are all init to null
 		data = new ArrayList<Byte>( Arrays.asList( new Byte[Field.values().length] ) ); 
-		
+		initFieldsData();
+	}
+	
+	/**
+	 * Construct packet from byte array
+	 */
+	public UrpPacket(byte[] byteArray) {
+		data = new ArrayList<Byte>( Bytes.asList( Arrays.copyOfRange( byteArray, 0, Field.values().length - 1 ) ) );
+		initFieldsData();	
+	}
+	
+	private void initFieldsData() {
 		// The version number is fixed to 1 as of current protocol spec (9/11/2011)
 		data.set( Field.VER.getByteIndex(), (byte) 1 );			
 		
-		// pre-fill the reserved field with 0 as of current protocol spec (9/11/2011)
-		setData( Field.RESERVED_HIGH.getByteIndex(), (short) 0 );	
-		
+		// Pre-fill the reserved field with 0 as of current protocol spec (9/11/2011)
+		setData( Field.RESERVED_HIGH.getByteIndex(), (short) 0 );			
 	}
 	
 	/**
@@ -132,9 +142,9 @@ public class UrpPacket {
 	/**
 	 * This method allow subclass to add length of its own data storage for other fields
 	 * The length must be in Octal-Byte unit (8 bytes).
-	 * @return short the added length
+	 * @return int the added length
 	 */
-	short getSubLength() {		
+	int getSubLength() {		
 		return 0;
 	}
 	
@@ -170,7 +180,7 @@ public class UrpPacket {
 	 * @param index the byte index
 	 * @param data byte
 	 */
-	public final void setData(int index, byte data) {
+	final void setData(int index, byte data) {
 		this.data.set( index, data );
 	}	
 	
@@ -179,7 +189,7 @@ public class UrpPacket {
 	 * @param index the array index of data's first byte
 	 * @param data short data
 	 */
-	public final void setData(int index, short data) {				
+	final void setData(int index, short data) {				
 		this.data.set( index, ( (byte) ( ( data & 0xff00 ) >>> 8 ) ) );
 		this.data.set( index + 1, ( (byte) ( data & 0x00ff ) ) );
 	}
@@ -189,7 +199,7 @@ public class UrpPacket {
 	 * @param index the array index of data's first byte
 	 * @param data int data
 	 */
-	public final void setData(int index, int data) {
+	final void setData(int index, int data) {
 		this.data.set( index, ( (byte) ( ( data & 0xff000000 ) >>> 24 ) ) );		
 		this.data.set( index + 1, ( (byte) ( ( data & 0x00ff0000 ) >>> 16 ) ) );
 		this.data.set( index + 2, ( (byte) ( ( data & 0x0000ff00 ) >>> 8 ) ) );
@@ -201,7 +211,7 @@ public class UrpPacket {
 	 * @param index the array index of data's first byte
 	 * @param data long data
 	 */
-	public final void setData(int index, long data) {
+	final void setData(int index, long data) {
 		setData(index, ( (int) ( (data & 0xffffffff00000000L) >>> 32 ) ) );
 		setData(index + 4, ( (int) (data & 0x00000000ffffffffL) ) );		
 	}
@@ -212,7 +222,7 @@ public class UrpPacket {
 	 * @param low lower 64-bit of data
 	 * @param high higher 64-bit of data
 	 */
-	public final void setData128(int index, long low, long high) {
+	final void setData128(int index, long low, long high) {
 		setData(index, high);
 		setData(index + 8, low);
 	}	
@@ -222,7 +232,7 @@ public class UrpPacket {
 	 * @param data
 	 * @return int index of currently add byte
 	 */
-	public final int addByte(byte data) {
+	final int addByte(byte data) {
 		int head = this.data.size();
 		this.data.add(data);
 		updateLength();
@@ -230,13 +240,13 @@ public class UrpPacket {
 	}
 	
 	/**
-	 * Add whole byte array to the collection.
+	 * Add copy of the whole byte array to the collection.
 	 * @param byteArray
 	 * @return int index of first byte added	 
 	 */
-	public final int addBytes(byte[] byteArray) {
+	final int addBytes(byte[] byteArray, int indexFrom, int indexTo) {
 		int head = this.data.size();
-		data.addAll( Bytes.asList(byteArray) );
+		data.addAll( Bytes.asList( Arrays.copyOfRange( byteArray, indexFrom, indexTo ) ) );		
 		updateLength();
 		return head;
 	}
@@ -246,7 +256,7 @@ public class UrpPacket {
 	 * @param data
 	 * @return int index of currently add short
 	 */
-	public final int addShort(short data) {
+	final int addShort(short data) {
 		int head = this.data.size();
 		this.data.add( (byte) ( (data & 0xff00) >>> 8 ) );
 		this.data.add( (byte) (data & 0x00ff) );
@@ -259,7 +269,7 @@ public class UrpPacket {
 	 * @param data
 	 * @return int the array index of added data
 	 */
-	public final int addInt(int data) {
+	final int addInt(int data) {
 		int head = this.data.size();
 		this.data.add( (byte) ( (data & 0xff000000) >>> 24) );
 		this.data.add( (byte) ( (data & 0x00ff0000) >>> 16 ) );
@@ -274,7 +284,7 @@ public class UrpPacket {
 	 * @param data
 	 * @return int the array index of added data
 	 */
-	public final int addLong(long data) {
+	final int addLong(long data) {
 		int head = addInt( (int) ( (data & 0xffffffff00000000L ) >>> 32 ) );
 		addInt( (int) (data & 0x00000000ffffffffL ) );		
 		return head;
@@ -286,7 +296,7 @@ public class UrpPacket {
 	 * @param high higher 64-bit of data
 	 * @return int the array index of added data
 	 */
-	public final int add128(long low, long high) {
+	final int add128(long low, long high) {
 		int head = addLong(high);
 		addLong(low);
 		return head;		

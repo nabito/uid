@@ -37,6 +37,10 @@ public class UrpRecieve extends UrpPacket {
 		
 	}
 	
+	public UrpRecieve(byte[] byteArray) {
+		super(byteArray);
+	}
+	
 	/**
 	 * Get Error Code
 	 * @return Error

@@ -78,7 +78,8 @@ public final class ResUcdQuery extends UrpQuery {
 		QUERY_MODE		( (short) 16 ),
 		QUERY_ATTRIBUTE	( (short) 18 ),
 		UCODE_TYPE		( (short) 20 ),
-		UCODE_LENGTH	( (short) 22 );
+		UCODE_LENGTH	( (short) 22 ),
+		QUERY_UCODE		( (short) 24 );
 		
 		private short byteIndex;
 		
@@ -109,6 +110,8 @@ public final class ResUcdQuery extends UrpQuery {
 	public ResUcdQuery() {
 		this(0, QueryMode.UIDC_RSMODE_RESOLUTION, QueryAttribute.UIDC_ATTR_RS, UcodeType.UID_128, (short) 0);
 	}
+	
+	// OPT offer constructor from byte[] 
 	
 	public ResUcdQuery(int t, QueryMode queryMode, QueryAttribute queryAttribute, UcodeType ucodeType, short ucodeLength) {
 		int temp;
@@ -192,7 +195,7 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
-	 * Set Ucode type
+	 * Set ucode type
 	 * @param type
 	 */
 	public final void setUcodeType(UcodeType type) {
@@ -200,7 +203,7 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 
 	/**
-	 * Get Ucode Length
+	 * Get ucode length
 	 * @return short length of queryucode/querymask (byte)
 	 */
 	public short getUcodeLength() {
@@ -208,14 +211,23 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
+	 * Set ucode length
+	 * @param length
+	 */
+	public void setUcodeLength(short length) {
+		setData(ResUcdQueryField.UCODE_LENGTH.getByteIndex(), length);
+	}
+	
+	/**
 	 * Update total length of a queryucode/querymask (byte)
+	 * @return int the updated length
 	 * @throws RuntimeException when the length data is bigger than field size
 	 */
-	private final void updateUcodeLength() {		
-		int length = ( queryUcode.size() * 2 );
-		if( length > Math.pow(2, Short.SIZE) ) throw new RuntimeException("The data length value exceed the size of length field");
-		short ucodeLength = (short) length;
-		setData(ResUcdQueryField.UCODE_LENGTH.getByteIndex(), ucodeLength);
+	private final int updateUcodeLength() {		
+		int length = queryUcode.size() + queryMask.size();
+		if( length > Math.pow(2, Short.SIZE) ) throw new RuntimeException("The data length value exceed the size of length field");		
+		setData(ResUcdQueryField.UCODE_LENGTH.getByteIndex(), (short) length);
+		return length;
 	}
 	
 	/**
@@ -253,7 +265,7 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
-	 * Add query ucode and its mask bits in 128-bit chunk
+	 * Add Query ucode and its mask bits in 128-bit chunk
 	 * @param ucodeLow lower 64-bit data of ucode
 	 * @param ucodeHigh higher 64-bit data of ucode
 	 * @param maskLow lower 64-bit data of mask
@@ -268,6 +280,19 @@ public final class ResUcdQuery extends UrpQuery {
 		queryMask.add(maskLow);
 		updateUcodeLength();
 		updateLength();		
+		return index;
+	}
+	
+	/**
+	 * Add Query ucode form byte array
+	 * @param byteArray
+	 * @return int index of the added ucode for later reference
+	 */
+	public final int addQueryUcode(byte[] byteArray) {
+		int index = queryUcode.size();
+		Utils.addBytesToLongList(byteArray, queryUcode);
+		updateUcodeLength();
+		updateLength();						
 		return index;
 	}
 	
@@ -307,12 +332,25 @@ public final class ResUcdQuery extends UrpQuery {
 	}
 	
 	/**
+	 * Add Query Mask form byte array
+	 * @param byteArray
+	 * @return int index of first added byte
+	 */
+	public final int addQueryMask(byte[] byteArray) {
+		int index = queryMask.size();
+		Utils.addBytesToLongList(byteArray, queryMask);
+		updateUcodeLength();
+		updateLength();
+		return index;
+	}
+	
+	/**
 	 * Override getSubLength() to provide size counting of subclass own data storage for queryucode/querymask fields
-	 * @return short the length of data in 8-Octet unit
+	 * @return int the length of data in 8-Octet unit
 	 */
 	@Override
-	short getSubLength() {
-		return (short) ( queryUcode.size() * 2 );
+	int getSubLength() {
+		return queryUcode.size() + queryMask.size();
 	}
 	
 	/**

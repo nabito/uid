@@ -1,17 +1,30 @@
 package com.dadfha;
 
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 
 public class Utils {
 	
+	// TODO track all uses of these first 2 methods and later change return type of ultimate problem method to be of one bigger
 	/**
 	 * Give int value of byte when treat as unsigned 
-	 * @param unsigned
+	 * @param b
 	 * @return
 	 */
 	public static final int ubyteToInt(byte b) {
 		return Integer.parseInt(String.format("%x", b), 16);
 	}
+	
+	/**
+	 * Give int value of short when treat as unsigned
+	 * @param s
+	 * @return
+	 */
+	public static final int ushortToInt(short s) {
+		return Integer.parseInt(String.format("%x", s), 16);
+	}	
 	
 	/**
 	 * Array concatenation of generic type object array of two
@@ -67,5 +80,33 @@ public class Utils {
 		}
 		return byteArray;
 	}
+	
+	/**
+	 * Adding byte array to list of long in Big Endian order
+	 * @param byteArray
+	 * @param list
+	 */
+	public static void addBytesToLongList(byte[] byteArray, List<Long> list) {
+		ByteBuffer bb = ByteBuffer.wrap(byteArray);
+		bb.clear();
+		
+		try {
+			while(bb.hasRemaining())
+				list.add(bb.getLong());
+		} catch (BufferUnderflowException e) {
+			// Check the padding needs
+			byte offset = (byte) (byteArray.length % 8);
+			int length = byteArray.length;
+			long lastLong = 0;
+			
+			// Convert byte array to long with 0 padding left
+			for(int i = length - offset; i < length; i++) {
+				// Since the shift is beyond int value cast to long is needed
+				lastLong |= ( (long) byteArray[i] ) << ( 8 - ( i - (length - offset) + 1 ) ) * 8; 				
+			}
+			// Add the 0 padded long
+			list.add(lastLong);
+		}		
+	}	
 
 }
