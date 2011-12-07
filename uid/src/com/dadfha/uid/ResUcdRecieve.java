@@ -95,7 +95,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 		addBytes(byteArray, ResUcdRecieveField.TTL.getByteIndex(), ResUcdRecieveField.DATA_LENGTH.getByteIndex() + 1);
 
 		// Data section
-		addResUcdData(Arrays.copyOfRange(byteArray, ResUcdRecieveField.DATA.getByteIndex(), ResUcdRecieveField.DATA.getByteIndex() + Utils.ushortToInt(getDataLength()) - 1));
+		addResUcdData(Arrays.copyOfRange(byteArray, ResUcdRecieveField.DATA.getByteIndex(), ResUcdRecieveField.DATA.getByteIndex() + getDataLength() - 1));
 		
 		// Mask Length row
 		int maskRowByteIndex = ResUcdRecieveField.DATA.getByteIndex() + getDataLength();
@@ -105,7 +105,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 		
 		// Mask section
 		int returnMaskByteIndex = maskLengthByteIndex + 2;
-		addMask(Arrays.copyOfRange(byteArray, returnMaskByteIndex, returnMaskByteIndex + Utils.ushortToInt(getMaskLength()) - 1));
+		addMask(Arrays.copyOfRange(byteArray, returnMaskByteIndex, returnMaskByteIndex + getMaskLength() - 1));
 		
 	}
 	
@@ -132,10 +132,10 @@ public final class ResUcdRecieve extends UrpRecieve {
 	
 	/**
 	 * Get expiration date of retrieved data (seconds)
-	 * @return int date of expiration in seconds
+	 * @return long date of expiration in seconds
 	 */
-	public final int getTTL() {
-		return getData(ResUcdRecieveField.TTL.getByteIndex());
+	public final long getTTL() {
+		return Utils.uintToLong(getDataInt(ResUcdRecieveField.TTL.getByteIndex()));
 	}
 	
 	/**
@@ -148,10 +148,10 @@ public final class ResUcdRecieve extends UrpRecieve {
 	
 	/**
 	 * Get data version of the search
-	 * @return short data version
+	 * @return int data version
 	 */
-	public final short getDataVersion() {
-		return getData(ResUcdRecieveField.DATA_VERSION.getByteIndex());
+	public final int getDataVersion() {
+		return Utils.ushortToInt(getDataShort(ResUcdRecieveField.DATA_VERSION.getByteIndex()));
 	}
 	
 	/**
@@ -167,7 +167,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 	 * @return ResolveMode
 	 */
 	public final ResolveMode getResolveMode() {
-		short mode = getData(ResUcdRecieveField.RESOLVE_MODE.getByteIndex());
+		short mode = getDataShort(ResUcdRecieveField.RESOLVE_MODE.getByteIndex());
 		return ResolveMode.valueOf(mode);
 	}
 	
@@ -184,7 +184,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 	 * @return DataAttribute
 	 */
 	public final DataAttribute getDataAttribute() {
-		short attribute = getData(ResUcdRecieveField.DATA_ATTRIBUTE.getByteIndex());
+		short attribute = getDataShort(ResUcdRecieveField.DATA_ATTRIBUTE.getByteIndex());
 		return DataAttribute.valueOf(attribute);		
 	}
 	
@@ -201,7 +201,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 	 * @return DataType
 	 */
 	public final DataType getDataType() {
-		short type = getData(ResUcdRecieveField.DATA_TYPE.getByteIndex());
+		short type = getDataShort(ResUcdRecieveField.DATA_TYPE.getByteIndex());
 		return DataType.valueOf(type);		
 	}
 	
@@ -215,10 +215,10 @@ public final class ResUcdRecieve extends UrpRecieve {
 	
 	/**
 	 * Get Data Length in byte
-	 * @return short numbers of byte in data section
+	 * @return int numbers of byte in data section
 	 */
-	public final short getDataLength() {
-		return getData(ResUcdRecieveField.DATA_LENGTH.getByteIndex());
+	public final int getDataLength() {
+		return Utils.ushortToInt(getDataShort(ResUcdRecieveField.DATA_LENGTH.getByteIndex()));
 	}
 	
 	/**
@@ -239,6 +239,14 @@ public final class ResUcdRecieve extends UrpRecieve {
 		if( length > Math.pow(2, Short.SIZE) ) throw new RuntimeException("The data length value exceed the size of length field");
 		setData( ResUcdRecieveField.DATA_LENGTH.getByteIndex(), (short) length );
 		return length;
+	}
+	
+	/**
+	 * Get whole resolved data in byte array form
+	 * @return byte[]
+	 */
+	public final byte[] getResUcdDataBytes() {		
+		return Utils.toByteArray(Longs.toArray(data)); 
 	}
 	
 	/**
@@ -286,10 +294,10 @@ public final class ResUcdRecieve extends UrpRecieve {
 	
 	/**
 	 * Get Mask Length in byte
-	 * @return short
+	 * @return int
 	 */
-	public final short getMaskLength() {
-		return maskLength;
+	public final int getMaskLength() {
+		return Utils.ushortToInt(maskLength);
 	}
 	
 	/**

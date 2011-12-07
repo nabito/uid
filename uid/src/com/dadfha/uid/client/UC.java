@@ -1,11 +1,21 @@
 package com.dadfha.uid.client;
 
+import com.dadfha.Utils;
+import com.dadfha.uid.ResUcdQuery.QueryAttribute;
+import com.dadfha.uid.ResUcdQuery.QueryMode;
+import com.dadfha.uid.ResUcdRecieve;
+import com.dadfha.uid.Ucode;
+import com.dadfha.uid.Ucode.UcodeType;
 import com.dadfha.uid.UcodeRP;
-
+import com.dadfha.uid.UrpPacket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 
 import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -19,30 +29,50 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
  */
 public class UC {
 	
-	private UcodeRP protocol = UcodeRP.getUcodeRP();
-
-	public UC() {
-		
-	}
+	private static final UcodeRP protocol = UcodeRP.getUcodeRP();
+	private UcrClientHandler clientHandler = new UcrClientHandler(this);
 	
+	private static final int UCODE_SERVER_PORT = 8080;
+
+	public UC() {}
+	 
 	public static void main(String[] args) {
 		
+		UC client = new UC();
+		Ucode code = client.readUcode();
+		Ucode mask = new Ucode(new long[] { 0xffffffffffffffffL, 0xffffffffffffffffL }, UcodeType.UID_128);
+				
+		// Remotely resolve ucode
+		protocol.resolveUcodeCascade(code, mask, QueryAttribute.UIDC_ATTR_SS, QueryMode.UIDC_RSMODE_RESOLUTION, "192.168.0.1");
+		
 	}
 	
-	// TODO make support for InetAddress connection and add the sendUcode, readUcodeTag and mock-up main 
+	/**
+	 * Read ucode either from QR code, RFID Tag, etc.
+	 * @return
+	 */
+	public final Ucode readUcode() {
+		return new Ucode(new long[] { 0x0efffec000000000L, 0x0000000000050123L }, UcodeType.UID_128);
+	}
+	
 	/**
 	 * Connect to UCR Server
 	 * @param host hostname of UCR Server
 	 * @param port specify specific port of the connection
-	 * @param firstMessageSize pass 0 if not known in advance (256 will be used default)
-	 * @throws Exception
 	 */
-    public final void connect(final String host, final int port, int firstMessageSize) throws Exception {
-
-    	// Check if first message size is defined and finalize it
-    	final int messageSize;
-        if(firstMessageSize == 0) messageSize = 256;
-        else messageSize = firstMessageSize;
+    public final void connectAndSend(final String host, UrpPacket packet) {    	
+    	try {
+			connectAndSend(InetAddress.getByName(host), packet);
+		} catch (UnknownHostException e) {
+			// OPT Warn user about unknown host
+		}    	
+    }	
+	
+	public final void connectAndSend(InetAddress address, UrpPacket packet) {
+    	
+		// Wrap query packet byte array
+		ChannelBuffer queryBuffer = ChannelBuffers.wrappedBuffer(packet.pack());
+		clientHandler.setSendingData(queryBuffer);
 
         // Configure the client.
         ClientBootstrap bootstrap = new ClientBootstrap(
@@ -54,19 +84,59 @@ public class UC {
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() throws Exception {
                 return Channels.pipeline(
-                        new UcrClientHandler(messageSize));
+                        clientHandler);
             }
         });
 
         // Start the connection attempt.
-        ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port));
+        ChannelFuture future = bootstrap.connect(new InetSocketAddress(address, UCODE_SERVER_PORT));
 
         // Wait until the connection is closed or the connection attempt fails.
         future.getChannel().getCloseFuture().awaitUninterruptibly();
 
         // Shut down thread pools to exit.
-        bootstrap.releaseExternalResources();
-    }	
+        bootstrap.releaseExternalResources();		
+	}
+	
+	/**
+	 * Do whatever client want to do with resolved data
+	 * @param packet
+	 */
+	public void processReturnData(ResUcdRecieve packet) {
+		
+		byte[] byteData = packet.getResUcdDataBytes();
+		
+		switch(packet.getDataType()) {
+			case UIDC_DATATYPE_UCODE_128:
+			case UIDC_DATATYPE_UCODE_256:
+			case UIDC_DATATYPE_UCODE_384:
+			case UIDC_DATATYPE_UCODE_512:
+				// OPT parse data to Ucode type
+				break;
+			case UIDC_DATATYPE_UCODE_IPV4:
+			case UIDC_DATATYPE_UCODE_IPV6:
+			case UIDC_DATATYPE_UCODE_URL:
+			case UIDC_DATATYPE_UCODE_HOST:
+			case UIDC_DATATYPE_UCODE_EMAIL:
+			case UIDC_DATATYPE_UCODE_PHONE:
+			case UIDC_DATATYPE_UCODE_TXT:
+				String stringData = Utils.bytesToUTF8String(byteData);
+				System.out.println(stringData);
+				break;
+			case UIDC_DATATYPE_UCODE_USER:
+				break;
+			default:
+				break;
+		}
+	}
+
+	/**
+	 * This method get called when ucode resolution failed
+	 */
+	public void resolveFailed() {
+	}
+	
+	
 	
 }
 	

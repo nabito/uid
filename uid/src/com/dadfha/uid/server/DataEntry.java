@@ -6,15 +6,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.dadfha.Utils;
 import com.dadfha.uid.Ucode;
 import com.google.common.primitives.Bytes;
 
 public class DataEntry {
 	
 	public enum DataAttribute {
-		UIDC_ATTR_RS		( (short) 0x0001 ),
-		UIDC_ATTR_SS		( (short) 0x0002 ),
-		UIDC_ATTR_SIGS		( (short) 0x0003 ),
+		UIDC_ATTR_RS		( (short) 0x0001 ), /** ucode resolution server address */
+		UIDC_ATTR_SS		( (short) 0x0002 ), /** Information server address */
+		UIDC_ATTR_SIGS		( (short) 0x0003 ), /** Signature server address */
 		UID_USER			( (short) 0x00ff );
 		
 		private short code;
@@ -162,15 +163,7 @@ public class DataEntry {
 	 */
 	public final String getStringData() {
 		byte[] byteArray = Bytes.toArray(data);
-		String s = null;
-		try {
-			s = new String(byteArray, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		} finally {
-			if(s == null) throw new RuntimeException("Cannot get string data");
-		}
-		return s;
+		return Utils.bytesToUTF8String(byteArray);
 	}	
 	
 	/**

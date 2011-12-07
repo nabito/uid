@@ -68,10 +68,18 @@ public class Ucode implements Comparable<Ucode> {
 	}
 	
 	/**
+	 * Get ucode type
+	 * @return UcodeType
+	 */
+	public final UcodeType getUcodeType() {
+		return type;
+	}
+	
+	/**
 	 * Get a copy of array containing ucode bits data
 	 * @return long[]
 	 */
-	public final long[] getBitsArray() {
+	public final long[] getLongArray() {
 		long[] copy = new long[data.length];
 		System.arraycopy(data, 0, copy, 0, data.length);
 		return copy;
@@ -93,7 +101,7 @@ public class Ucode implements Comparable<Ucode> {
 	 */
 	public final Ucode bitwiseAND(Ucode code) {
 		if(code.type != type) throw new RuntimeException("Type of ucode does not match");
-		long[] l = code.getBitsArray();
+		long[] l = code.getLongArray();
 		
 		for(int i = 0; i < data.length; i++) {
 			l[i] = l[i] & data[i];

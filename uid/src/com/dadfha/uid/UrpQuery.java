@@ -40,7 +40,7 @@ public class UrpQuery extends UrpPacket {
 	 * @return Command
 	 */
 	public Command getCommandId() {
-		return Command.valueOf(getOperator());
+		return Command.valueOf( (short) getOperator() );
 	}
 	
 	/**
@@ -48,7 +48,7 @@ public class UrpQuery extends UrpPacket {
 	 * @param command
 	 */
 	public void setCommandId(Command command) {
-		this.setOperator(command.getCode());
+		setOperator( command.getCode() );
 	}
 	
 	

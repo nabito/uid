@@ -1,13 +1,15 @@
 package com.dadfha;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 public class Utils {
 	
-	// TODO track all uses of these first 2 methods and later change return type of ultimate problem method to be of one bigger
 	/**
 	 * Give int value of byte when treat as unsigned 
 	 * @param b
@@ -25,6 +27,15 @@ public class Utils {
 	public static final int ushortToInt(short s) {
 		return Integer.parseInt(String.format("%x", s), 16);
 	}	
+	
+	/**
+	 * Give long value of int when treat as unsigned
+	 * @param i
+	 * @return
+	 */
+	public static final long uintToLong(int i) {
+		return Long.parseLong(String.format("%x", i), 16);
+	}
 	
 	/**
 	 * Array concatenation of generic type object array of two
@@ -82,11 +93,12 @@ public class Utils {
 	}
 	
 	/**
-	 * Adding byte array to list of long in Big Endian order
+	 * Adding byte array to list of long in Big Endian order.
+	 * The list from parameter get modified directly.
 	 * @param byteArray
 	 * @param list
 	 */
-	public static void addBytesToLongList(byte[] byteArray, List<Long> list) {
+	public static final void addBytesToLongList(byte[] byteArray, List<Long> list) {
 		ByteBuffer bb = ByteBuffer.wrap(byteArray);
 		bb.clear();
 		
@@ -108,5 +120,53 @@ public class Utils {
 			list.add(lastLong);
 		}		
 	}	
+	
+	/**
+	 * Convert ByteBuffer to byte array, auto copy buffer contents if not already backed by byte array
+	 * @param bb
+	 * @return byte[]
+	 */
+	public static final byte[] byteBufferToByteArray(ByteBuffer bb) {		
+		// Get buffer ready for read by reset the readIndex
+		bb.clear();
+		byte[] buffer = null;
+		
+		if (bb.hasArray()) {
+			buffer = bb.array(); // this method only applicable when ByteBuffer is backed by byte[]
+		} else {
+			buffer = new byte[bb.capacity()];
+			bb.get(buffer, 0, buffer.length);
+		}		
+		return buffer;		
+	}
+	
+	/**
+	 * Decode UTF-8 encoded String from byte array
+	 * @param byteArray
+	 * @return String
+	 */
+	public static final String bytesToUTF8String(byte[] byteArray) {
+		String s = null;
+		try {
+			s = new String(byteArray, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} finally {
+			if(s == null) throw new RuntimeException("Cannot get string data");
+		}
+		return s;		
+	}
+	
+	/**
+	 * Get time in seconds from Y2K Midnight 1-1-2000 00:00 GMT
+	 * @return
+	 */
+	public static final int getSecondsFromY2K() {
+		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT+0000"));
+		c.clear();
+		c.set(2000, 1, 1, 0, 0, 0);
+		// c.complete();		
+		return (int) ( ( Calendar.getInstance(TimeZone.getTimeZone("GMT+0000")).getTimeInMillis() - c.getTimeInMillis() ) * 1000 );		
+	}
 
 }

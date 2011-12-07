@@ -1,6 +1,5 @@
 package com.dadfha.uid.server;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,6 +11,7 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
+import com.dadfha.Utils;
 import com.dadfha.uid.ResUcdQuery;
 import com.dadfha.uid.ResUcdRecieve;
 import com.dadfha.uid.UcodeRP;
@@ -19,6 +19,7 @@ import com.dadfha.uid.UcodeRP;
 public class UcrServerHandler extends SimpleChannelUpstreamHandler {
 	
 	private final UcodeRP protocol = UcodeRP.getUcodeRP();
+	private UcodeRS server = null;
 
     private static final Logger logger = Logger.getLogger(
             UcrServerHandler.class.getName());
@@ -29,34 +30,50 @@ public class UcrServerHandler extends SimpleChannelUpstreamHandler {
         return transferredBytes.get();
     }
 
+	/**
+	 * @return the server
+	 */
+	public UcodeRS getServer() {
+		return server;
+	}
+
+	/**
+	 * @param server the server to set
+	 */
+	public void setServer(UcodeRS server) {
+		this.server = server;
+	}
+
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
+		
+		// Save reference to server thread
+    	protocol.serverThread = Thread.currentThread();		
+		
+		// Update the transferred byte
+		transferredBytes.addAndGet(((ChannelBuffer) e.getMessage()).readableBytes()); 
 
 		// Read data from buffer
-		ByteBuffer bb = ((ChannelBuffer) e.getMessage()).toByteBuffer();
-
-		// Get buffer ready for read by reset the readIndex
-		bb.clear();
-		byte[] buffer = null;
-		
-		if (bb.hasArray()) {
-			buffer = bb.array(); // this method only applicable when ByteBuffer is backed by byte[]
-		} else {
-			buffer = new byte[bb.capacity()];
-			bb.get(buffer, 0, buffer.length);
-		}
+		byte[] buffer = Utils.byteBufferToByteArray(((ChannelBuffer) e.getMessage()).toByteBuffer());
 		
 		// Parse data in UCR Protocol:UrpQuery format
 		ResUcdQuery queryPacket = (ResUcdQuery) protocol.parseQueryPacket(buffer);
 		
 		// Process query
-		ResUcdRecieve returnPacket = (ResUcdRecieve) protocol.processQuery(queryPacket);
-	
-		// Return resolved data packet
-		ChannelBuffer returnBuffer = ChannelBuffers.wrappedBuffer(returnPacket.pack()); // Wrap return packet byte array
-		transferredBytes.addAndGet( returnBuffer.readableBytes() ); // Update the transferred byte
-		e.getChannel().write(returnBuffer);		
-
+		Object rawData = protocol.processQuery(queryPacket);
+		
+		if(rawData == null) {
+			server.queryProcessFailed();
+			return;
+		} else {	
+			// Return resolved data packet
+			ResUcdRecieve returnPacket = (ResUcdRecieve) rawData;
+			ChannelBuffer returnBuffer = ChannelBuffers.wrappedBuffer(returnPacket.pack()); // Wrap return packet byte array
+			e.getChannel().write(returnBuffer);					
+		}
+		
+		// ??? close connection here?
+		
 	}
 
     @Override

@@ -17,9 +17,9 @@ import com.google.common.primitives.Longs;
 public final class ResUcdQuery extends UrpQuery {
 
 	public enum QueryMode {
-		UIDC_RSMODE_RESOLUTION	( (short) 0x0000 ),
-		UIDC_RSMODE_CACHE		( (short) 0x0001 ),
-		UIDC_RSMODE_CASCADE		( (short) 0x0002 );
+		UIDC_RSMODE_RESOLUTION	( (short) 0x0000 ), /** Instructs ucode resolution */
+		UIDC_RSMODE_CACHE		( (short) 0x0001 ), /** Permits a cache search */
+		UIDC_RSMODE_CASCADE		( (short) 0x0002 ); /** Cascade mode */
 		
 		private short code;
 		private static Map<Short, QueryMode> table = new HashMap<Short, QueryMode>();
@@ -73,13 +73,13 @@ public final class ResUcdQuery extends UrpQuery {
 	}	
 	
 	public enum ResUcdQueryField {
-		T				( (short) 8 ),
+		T				( (short) 8 ), /** Command send time cumulative seconds since 0:00AM, Jan. 1,2000 GMT */
 		RESERVED		( (short) 12 ),
-		QUERY_MODE		( (short) 16 ),
-		QUERY_ATTRIBUTE	( (short) 18 ),
-		UCODE_TYPE		( (short) 20 ),
-		UCODE_LENGTH	( (short) 22 ),
-		QUERY_UCODE		( (short) 24 );
+		QUERY_MODE		( (short) 16 ), /** Search mode of the ucode resolution database */
+		QUERY_ATTRIBUTE	( (short) 18 ), /** Data attribute to be retrieved */
+		UCODE_TYPE		( (short) 20 ), /** ucodeType ucode type to be retrieved */
+		UCODE_LENGTH	( (short) 22 ), /** Total length of queryucode/querymask (byte) */
+		QUERY_UCODE		( (short) 24 ); /** ucode to be retrieved */
 		
 		private short byteIndex;
 		
@@ -113,7 +113,19 @@ public final class ResUcdQuery extends UrpQuery {
 	
 	// OPT offer constructor from byte[] 
 	
+	/**
+	 * Construct ResUcdQuery packet, manually specify command send time and ucode length
+	 * @param t Command send time cumulative seconds since 0:00AM, Jan. 1,2000 GMT 
+	 * @param queryMode Search mode of the ucode resolution database 
+	 * @param queryAttribute Data attribute to be retrieved
+	 * @param ucodeType ucode type to be retrieved
+	 * @param ucodeLength Total length of queryucode/querymask (byte)
+	 */
 	public ResUcdQuery(int t, QueryMode queryMode, QueryAttribute queryAttribute, UcodeType ucodeType, short ucodeLength) {
+		
+		// Set packet command to res_ucd
+		setCommandId(Command.RES_UCD);
+		
 		int temp;
 		
 		// Initialize all fields
@@ -134,10 +146,10 @@ public final class ResUcdQuery extends UrpQuery {
 	
 	/**
 	 * Get the time of command send time
-	 * @return int the time in seconds since 0:00AM, Jan. 1,2000 GMT
+	 * @return long the time in seconds since 0:00AM, Jan. 1,2000 GMT
 	 */
-	public final int getT() {
-		return getData(ResUcdQueryField.T.getByteIndex());
+	public final long getT() {
+		return Utils.uintToLong(getDataInt(ResUcdQueryField.T.getByteIndex()));
 	}	
 	
 	/**
@@ -188,7 +200,7 @@ public final class ResUcdQuery extends UrpQuery {
 	 * @throws RuntimeException when ucode type value not recognized
 	 */
 	public final UcodeType getUcodeType() {
-		short type = getData(ResUcdQueryField.UCODE_TYPE.getByteIndex());
+		short type = getDataShort(ResUcdQueryField.UCODE_TYPE.getByteIndex());
 		UcodeType ut = UcodeType.valueOf(type);
 		if(ut == null) throw new RuntimeException("The ucode type field cannot be recognized.");
 		return ut;	
@@ -204,10 +216,10 @@ public final class ResUcdQuery extends UrpQuery {
 
 	/**
 	 * Get ucode length
-	 * @return short length of queryucode/querymask (byte)
+	 * @return int length of queryucode/querymask (byte)
 	 */
-	public short getUcodeLength() {
-		return getData(ResUcdQueryField.UCODE_LENGTH.getByteIndex());
+	public int getUcodeLength() {
+		return Utils.ushortToInt(getDataShort(ResUcdQueryField.UCODE_LENGTH.getByteIndex()));
 	}
 	
 	/**
@@ -262,6 +274,21 @@ public final class ResUcdQuery extends UrpQuery {
 		if(index % 2 != 0) throw new Exception("the index value of ucode cannot be odd number");
 		queryUcode.set(index, dataHigh);
 		queryUcode.set(index + 1, dataLow);
+	}
+	
+	/**
+	 * Add Query ucode and Query Mask with Ucode type parameters
+	 * @param queryUcode
+	 * @param queryMask
+	 * @return int index of first long added
+	 */
+	public final int addQuery(Ucode queryUcode, Ucode queryMask) {
+		int index = this.queryUcode.size();
+		long[] ucode = queryUcode.getLongArray();
+		long[] mask = queryMask.getLongArray();
+		this.queryUcode.addAll(Longs.asList(ucode));
+		this.queryMask.addAll(Longs.asList(mask));
+		return index;
 	}
 	
 	/**

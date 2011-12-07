@@ -94,5 +94,11 @@ public class UcodeRS {
 		
 	}	
 	
+	/**
+	 * This function get called when query process failed.
+	 */
+	public void queryProcessFailed() {
+		
+	}
 	
 }

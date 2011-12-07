@@ -46,7 +46,7 @@ public class UrpRecieve extends UrpPacket {
 	 * @return Error
 	 */
 	public Error getErrorCode() {
-		return Error.valueOf(getOperator());
+		return Error.valueOf( (short) getOperator() );
 	}
 	
 	/**

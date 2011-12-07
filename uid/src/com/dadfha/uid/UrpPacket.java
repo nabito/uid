@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.dadfha.Utils;
 import com.google.common.primitives.Bytes;
 
 public class UrpPacket {
@@ -16,8 +17,8 @@ public class UrpPacket {
 	public enum Field {
 		VER				( (short) 0 ),
 		SERIAL_NO		( (short) 1 ),
-		OPERATOR_HIGH	( (short) 2 ), // Can be either Command ID or Error Code depended on the type of packet
-		OPERATOR_LOW	( (short) 3 ),
+		OPERATOR_HIGH	( (short) 2 ), /** Can be either Command ID or Error Code depended on the type of packet */
+		OPERATOR_LOW	( (short) 3 ), /** Can be either Command ID or Error Code depended on the type of packet */
 		RESERVED_HIGH	( (short) 4 ),
 		RESERVED_LOW	( (short) 5 ),
 		PL_LENGTH_LOW	( (short) 6 ),
@@ -64,10 +65,10 @@ public class UrpPacket {
 	
 	/**
 	 * Get Version field
-	 * @return byte of version
+	 * @return int of version
 	 */
-	public final byte getVersion() {
-		return data.get( Field.VER.getByteIndex() );
+	public final int getVersion() {
+		return Utils.ubyteToInt( data.get( Field.VER.getByteIndex() ) );
 	}
 	
 	/**
@@ -80,10 +81,10 @@ public class UrpPacket {
 	
 	/**
 	 * Get Serial Number field
-	 * @return byte of Serial Number
+	 * @return int of Serial Number
 	 */
-	public final byte getSerialNumber() {
-		return data.get( Field.SERIAL_NO.getByteIndex() );
+	public final int getSerialNumber() {
+		return Utils.ubyteToInt( data.get( Field.SERIAL_NO.getByteIndex() ) );
 	}
 	
 	/**
@@ -96,26 +97,26 @@ public class UrpPacket {
 	
 	/**
 	 * Get Operator field
-	 * @return short Operator code
+	 * @return int Operator code
 	 */
-	public final short getOperator() {
-		return getDataShort( Field.OPERATOR_HIGH.getByteIndex() );
+	final int getOperator() {
+		return Utils.ushortToInt( getDataShort( Field.OPERATOR_HIGH.getByteIndex() ) );
 	}
 	
 	/**
 	 * Update Operator field
 	 * @param operator
 	 */
-	public final void setOperator(short operator) {
+	final void setOperator(short operator) {
 		setData(Field.OPERATOR_HIGH.getByteIndex(), operator);
 	}
 	
 	/**
 	 * Total length of ucodeRP packet in 8 octet (byte) blocks
-	 * @return short the number of set(s) of 8 octet block(s)
+	 * @return int the number of set(s) of 8 octet block(s)
 	 */
-	public final short getLength() {
-		return getDataShort( Field.PL_LENGTH_LOW.getByteIndex() );
+	public final int getLength() {
+		return Utils.ushortToInt( getDataShort( Field.PL_LENGTH_LOW.getByteIndex() ) );
 	}
 	
 	/**
@@ -152,7 +153,7 @@ public class UrpPacket {
 	 * Get read-only copy of packet data collection in byte array list
 	 * @return
 	 */
-	public final List<Byte> getData() {
+	final List<Byte> getData() {
 		return Collections.unmodifiableList(data);
 	}	
 	
@@ -161,7 +162,7 @@ public class UrpPacket {
 	 * @param index the byte index
 	 * @return byte data
 	 */
-	public final byte getData(int index) {
+	final byte getData(int index) {
 		return data.get(index);
 	}
 	
@@ -170,10 +171,20 @@ public class UrpPacket {
 	 * @param index the array index of data's first byte
 	 * @return short the combined bytes of index and index+1 in Big Endian order
 	 */
-	public final short getDataShort(int index) {
+	final short getDataShort(int index) {
 		return (short) ( ( data.get( index ) << 8 ) | 
 				data.get( index + 1 ) );		
 	}	
+	
+	/**
+	 * Get 4 byte blocks into 1 int from an index
+	 * @param index the array index of data's first byte
+	 * @return int the combined 4 bytes from index in Big Endian order 
+	 */
+	final int getDataInt(int index) {
+		return (int) ( (data.get(index) << 24) | (data.get(index + 1) << 16)
+				| (data.get(index + 2) << 8) | data.get(index + 3));
+	}
 	
 	/**
 	 * Update data in byte array list
