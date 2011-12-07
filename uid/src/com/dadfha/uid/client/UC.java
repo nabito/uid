@@ -64,7 +64,7 @@ public class UC {
     	try {
 			connectAndSend(InetAddress.getByName(host), packet);
 		} catch (UnknownHostException e) {
-			// OPT Warn user about unknown host
+			// Warn user about unknown host
 		}    	
     }	
 	
@@ -111,7 +111,7 @@ public class UC {
 			case UIDC_DATATYPE_UCODE_256:
 			case UIDC_DATATYPE_UCODE_384:
 			case UIDC_DATATYPE_UCODE_512:
-				// OPT parse data to Ucode type
+				// parse data to Ucode type
 				break;
 			case UIDC_DATATYPE_UCODE_IPV4:
 			case UIDC_DATATYPE_UCODE_IPV6:

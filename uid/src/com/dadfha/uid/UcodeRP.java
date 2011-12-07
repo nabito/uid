@@ -22,12 +22,13 @@ import com.dadfha.uid.server.DataFile;
 import com.dadfha.uid.server.DataFile.CascadeMode;
 import com.dadfha.uid.server.UcodeRD;
 
-// OPT This has potential to become generic packet construction classes
-// since it make use of Collection instead of classes attribute for packet's fields 
+
 
 /**
+ * Simplified ucode Resolution Protocol
  * @author Wirawit
- *
+ * Note: This has potential to become generic packet construction classes
+ * since it make use of Collection instead of classes attribute for packet's fields 
  */
 public class UcodeRP {
 	
@@ -239,9 +240,11 @@ public class UcodeRP {
 		// and (querymask & ucodemask) equals ucodemask
 		Iterator<DataEntry> j = resolvedFile.getDataEntriesView().iterator();
 		DataEntry entry = null;
+		DataEntry resolvedEntry = null;
+		isSpaceMatched = false;
+		
 		// Default alternative server with which another search attempt may succeed
 		// OPT this should be defined as constant or file resource
-		DataEntry resolvedEntry = null; 
 		DataEntry defaultEntry = new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050200L),
 				new Ucode(0xffffffffffffffffL, 0xffffffffffffff00L),	
 				DataAttribute.UIDC_ATTR_RS,
@@ -249,7 +252,6 @@ public class UcodeRP {
 				3600,
 				DataType.UIDC_DATATYPE_UCODE_IPV4,
 				"192.168.10.1");
-		isSpaceMatched = false;
 
 		while (j.hasNext()) {
 			entry = j.next();
