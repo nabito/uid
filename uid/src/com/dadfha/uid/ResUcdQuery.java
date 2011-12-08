@@ -114,6 +114,22 @@ public final class ResUcdQuery extends UrpQuery {
 	// OPT offer constructor from byte[] 
 	
 	/**
+	 * Construct ResUcdQuery packet with default values as followed:
+	 * 
+	 * Property			Value
+	 * t				0
+	 * ucodelength		0
+	 * 
+	 * @param queryMode Search mode of the ucode resolution database 
+	 * @param queryAttribute Data attribute to be retrieved
+	 * @param ucodeType ucode type to be retrieved
+	 * 
+	 */
+	public ResUcdQuery(QueryMode queryMode, QueryAttribute queryAttribute, UcodeType ucodeType) {
+		this(0, queryMode, queryAttribute, ucodeType, (short)0);
+	}
+	
+	/**
 	 * Construct ResUcdQuery packet, manually specify command send time and ucode length
 	 * @param t Command send time cumulative seconds since 0:00AM, Jan. 1,2000 GMT 
 	 * @param queryMode Search mode of the ucode resolution database 

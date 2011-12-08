@@ -122,6 +122,7 @@ public class DataFile {
 	 * @return boolean
 	 */
 	public final boolean isInSpace(Ucode code) {
+		// FIXME check correctness of this code, it doesn't work right?
 		return ( dbMask.bitwiseAND( dbUcode ).toString().equals( dbMask.bitwiseAND( code ).toString() ) ) ? true : false;
 	}
 	

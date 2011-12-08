@@ -95,7 +95,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 		addBytes(byteArray, ResUcdRecieveField.TTL.getByteIndex(), ResUcdRecieveField.DATA_LENGTH.getByteIndex() + 1);
 
 		// Data section
-		addResUcdData(Arrays.copyOfRange(byteArray, ResUcdRecieveField.DATA.getByteIndex(), ResUcdRecieveField.DATA.getByteIndex() + getDataLength() - 1));
+		addResUcdData(Arrays.copyOfRange(byteArray, ResUcdRecieveField.DATA.getByteIndex(), ResUcdRecieveField.DATA.getByteIndex() + getDataLength()));
 		
 		// Mask Length row
 		int maskRowByteIndex = ResUcdRecieveField.DATA.getByteIndex() + getDataLength();
@@ -105,7 +105,7 @@ public final class ResUcdRecieve extends UrpRecieve {
 		
 		// Mask section
 		int returnMaskByteIndex = maskLengthByteIndex + 2;
-		addMask(Arrays.copyOfRange(byteArray, returnMaskByteIndex, returnMaskByteIndex + getMaskLength() - 1));
+		addMask(Arrays.copyOfRange(byteArray, returnMaskByteIndex, returnMaskByteIndex + getMaskLength()));
 		
 	}
 	

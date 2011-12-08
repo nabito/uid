@@ -1,6 +1,7 @@
 package com.dadfha.uid.client;
 
 import com.dadfha.Utils;
+import com.dadfha.uid.ResUcdQuery;
 import com.dadfha.uid.ResUcdQuery.QueryAttribute;
 import com.dadfha.uid.ResUcdQuery.QueryMode;
 import com.dadfha.uid.ResUcdRecieve;
@@ -41,9 +42,14 @@ public class UC {
 		UC client = new UC();
 		Ucode code = client.readUcode();
 		Ucode mask = new Ucode(new long[] { 0xffffffffffffffffL, 0xffffffffffffffffL }, UcodeType.UID_128);
-				
+		
+		// Construct query packet
+		ResUcdQuery ruqPacket = new ResUcdQuery(QueryMode.UIDC_RSMODE_RESOLUTION, QueryAttribute.UIDC_ATTR_SS, code.getUcodeType());
+		ruqPacket.addQuery(code, mask);
+		
 		// Remotely resolve ucode
-		protocol.resolveUcodeCascade(code, mask, QueryAttribute.UIDC_ATTR_SS, QueryMode.UIDC_RSMODE_RESOLUTION, "192.168.0.1");
+		protocol.setClient(client);
+		protocol.resolveUcodeRemote(ruqPacket, "127.0.0.1");
 		
 	}
 	
@@ -70,9 +76,8 @@ public class UC {
 	
 	public final void connectAndSend(InetAddress address, UrpPacket packet) {
     	
-		// Wrap query packet byte array
-		ChannelBuffer queryBuffer = ChannelBuffers.wrappedBuffer(packet.pack());
-		clientHandler.setSendingData(queryBuffer);
+		// Save reference to sending packet
+		clientHandler.setSendingPacket(packet);
 
         // Configure the client.
         ClientBootstrap bootstrap = new ClientBootstrap(
@@ -106,26 +111,32 @@ public class UC {
 		
 		byte[] byteData = packet.getResUcdDataBytes();
 		
+		
+		System.out.println("ucode resolution succeed.");
+		
+		/*
+		String s = "Data Length: " + packet.getMask(1);
+		System.out.println(s);
+		
+		for(byte b : byteData) System.out.println(b);
+		*/
+		
 		switch(packet.getDataType()) {
 			case UIDC_DATATYPE_UCODE_128:
 			case UIDC_DATATYPE_UCODE_256:
 			case UIDC_DATATYPE_UCODE_384:
-			case UIDC_DATATYPE_UCODE_512:
-				// parse data to Ucode type
-				break;
+			case UIDC_DATATYPE_UCODE_512: // parse data to Ucode type until this point
 			case UIDC_DATATYPE_UCODE_IPV4:
 			case UIDC_DATATYPE_UCODE_IPV6:
 			case UIDC_DATATYPE_UCODE_URL:
 			case UIDC_DATATYPE_UCODE_HOST:
 			case UIDC_DATATYPE_UCODE_EMAIL:
 			case UIDC_DATATYPE_UCODE_PHONE:
-			case UIDC_DATATYPE_UCODE_TXT:
-				String stringData = Utils.bytesToUTF8String(byteData);
-				System.out.println(stringData);
-				break;
+			case UIDC_DATATYPE_UCODE_TXT: // parse String until this point
 			case UIDC_DATATYPE_UCODE_USER:
-				break;
 			default:
+				String stringData = Utils.bytesToUTF8String(byteData);
+				System.out.println(stringData);				
 				break;
 		}
 	}
@@ -134,6 +145,7 @@ public class UC {
 	 * This method get called when ucode resolution failed
 	 */
 	public void resolveFailed() {
+		System.out.println("ucode resolution failed.");
 	}
 	
 	

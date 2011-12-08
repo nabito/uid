@@ -5,6 +5,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -15,6 +16,7 @@ import com.dadfha.Utils;
 import com.dadfha.uid.ResUcdQuery;
 import com.dadfha.uid.ResUcdRecieve;
 import com.dadfha.uid.UcodeRP;
+import com.dadfha.uid.UrpPacket;
 import com.dadfha.uid.UrpQuery;
 
 
@@ -36,11 +38,20 @@ public class UcrClientHandler extends SimpleChannelUpstreamHandler {
     	this.client = client;
     }
     
-    public final void setSendingData(Object data) {
-    	this.sendingPacket = data;
+    /**
+     * Save reference for packet sent to remote host.
+     * It will be later used in comparison of received packet.
+     * @param packet
+     */
+    public final void setSendingPacket(Object packet) {
+    	this.sendingPacket = packet;
     }
     
-    public final Object getSendingData() {
+    /**
+     * Get packet sent to remote host.
+     * @return Object of UrpQuery
+     */
+    public final Object getSendingPacket() {
     	return sendingPacket;
     }
     
@@ -59,9 +70,12 @@ public class UcrClientHandler extends SimpleChannelUpstreamHandler {
     @Override
     public void channelConnected(
             ChannelHandlerContext ctx, ChannelStateEvent e) {
-        // ??? Send the packet when connected
+        // Send the packet when connected
     	if(sendingPacket == null) throw new RuntimeException("The packet has yet to be defined.");
-        e.getChannel().write(sendingPacket);
+        if(!(sendingPacket instanceof UrpPacket)) throw new RuntimeException("The sending packet is not of type UrpPacket.");
+        UrpPacket packet = (UrpPacket) sendingPacket;
+    	ChannelBuffer queryBuffer = ChannelBuffers.wrappedBuffer(packet.pack());
+        e.getChannel().write(queryBuffer);
     }
 
     @Override
@@ -81,10 +95,9 @@ public class UcrClientHandler extends SimpleChannelUpstreamHandler {
         ResUcdRecieve returnPacket = (ResUcdRecieve) protocol.parseRecievePacket(buffer);
         ResUcdQuery queryPacket = null;
         
-        // Process returned packet
+        // Process returned packet in comparison with sent query packet
         if(!(sendingPacket instanceof UrpQuery)) throw new RuntimeException("The sending packet is not of type UrpQuery.");
-        else {
-        	
+        else {        	
         	// Cast based on command type of the query packet
         	UrpQuery uq = (UrpQuery) sendingPacket;
         	switch(uq.getCommandId()) {
@@ -93,8 +106,7 @@ public class UcrClientHandler extends SimpleChannelUpstreamHandler {
 	        		break;
 	        	default:
 	        		break;
-        	}
-        	
+        	}        	
         }
         
         Object rawData = null;
@@ -112,9 +124,11 @@ public class UcrClientHandler extends SimpleChannelUpstreamHandler {
         	ResUcdRecieve finalPacket = (ResUcdRecieve) rawData;
         	client.processReturnData(finalPacket);        	
         	// Check if this is cascade requested packet that need to be forwarded back
-        	if(protocol.forwardPacketMap.remove(queryPacket.getQueryUcode()) + 1 == finalPacket.getSerialNumber()) {
-        		protocol.returnCascadePacket(finalPacket);
+        	if(protocol.forwardPacketMap.containsKey(queryPacket.getQueryUcode())) {
+            	assert(protocol.forwardPacketMap.remove(queryPacket.getQueryUcode()) + 1 == finalPacket.getSerialNumber());
+            	protocol.returnCascadePacket(finalPacket);    		
         	}
+
         	
         }        
         

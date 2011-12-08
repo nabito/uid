@@ -165,7 +165,7 @@ public class Utils {
 		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT+0000"));
 		c.clear();
 		c.set(2000, 1, 1, 0, 0, 0);
-		// c.complete();		
+		//c.complete();		
 		return (int) ( ( Calendar.getInstance(TimeZone.getTimeZone("GMT+0000")).getTimeInMillis() - c.getTimeInMillis() ) * 1000 );		
 	}
 

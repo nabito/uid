@@ -11,6 +11,8 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
 import com.dadfha.uid.Ucode;
+import com.dadfha.uid.UcodeRP;
+import com.dadfha.uid.client.UC;
 import com.dadfha.uid.server.DataEntry.DataAttribute;
 import com.dadfha.uid.server.DataEntry.DataType;
 import com.dadfha.uid.server.DataFile.CascadeMode;
@@ -21,11 +23,17 @@ import com.dadfha.uid.server.DataFile.CascadeMode;
  */
 public class UcodeRS {
 	
+	private UC client;
 	private UcodeRD database;
+	private UcodeRP protocol = UcodeRP.getUcodeRP();
+	
 	public static final int SERVER_PORT = 8080;
 	
-	public UcodeRS() { 						
+	public UcodeRS() { 			
+		client = new UC();
 		database = new UcodeRD();
+		protocol.setClient(client);
+		protocol.setDatabase(database);
 	}
 	
 	public static void main(String[] args) {
@@ -60,16 +68,19 @@ public class UcodeRS {
 	public void initMockDbData() {
 		
 		DataFile file1 = new DataFile(new Ucode(0x0efffec000000000L, 0x0000000000040000L), new Ucode(0xffffffffffffffffL, 0xffffffffffff0000L), CascadeMode.UIDC_NOCSC);
+		
+		DataFile file2 = new DataFile(new Ucode(0x0efffec000000000L, 0x0000000000050000L), new Ucode(0xffffffffffffffffL, 0xffffffffffff0000L), CascadeMode.UIDC_CSC);
+		
 		try {
-			file1.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050100L),
+			file2.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050100L),
 												new Ucode(0xffffffffffffffffL, 0xffffffffffffff00L),	
 												DataAttribute.UIDC_ATTR_SS,
 												(short) 1,
 												0,
 												DataType.UIDC_DATATYPE_UCODE_URL,
 												"http://www.uidcenter.org") );
-			
-			file1.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050200L),
+		
+			file2.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050200L),
 					new Ucode(0xffffffffffffffffL, 0xffffffffffffff00L),	
 					DataAttribute.UIDC_ATTR_RS,
 					(short) 1,
@@ -77,7 +88,7 @@ public class UcodeRS {
 					DataType.UIDC_DATATYPE_UCODE_IPV4,
 					"192.168.10.1") );	
 			
-			file1.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050300L),
+			file2.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050300L),
 					new Ucode(0xffffffffffffffffL, 0xffffffffffffff00L),	
 					DataAttribute.UIDC_ATTR_RS,
 					(short) 2,
@@ -87,10 +98,11 @@ public class UcodeRS {
 			
 		} catch (Exception e) {
 			// Return message to user that the the supplied ucode is not supported in this space
-		}
-		DataFile file2 = new DataFile(new Ucode(0x0efffec000000000L, 0x0000000000050000L), new Ucode(0xffffffffffffffffL, 0xffffffffffff0000L), CascadeMode.UIDC_CSC);
+		}		
+		
 		database.addDataFile(file1);
-		database.addDataFile(file2);				
+		database.addDataFile(file2);	
+					
 		
 	}	
 	

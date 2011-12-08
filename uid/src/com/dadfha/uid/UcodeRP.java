@@ -305,9 +305,10 @@ public class UcodeRP {
 	}
 	
 	/**
-	 * Cascade resolve ucode on remote ucode Resolution Server. 
+	 * Cascade resolve ucode on remote ucode Resolution Server. New query packet is constructed.
 	 * Save query packet serial number for later forwarding back reference.
 	 * Save current running Thread to block wait for returning of cascade data.
+	 * This method is expected to be called by resolution server.
 	 * @param code ucode
 	 * @param mask ucode mask
 	 * @param attribute Query Attribute
@@ -328,8 +329,6 @@ public class UcodeRP {
 		forwardPacketMap.put(code, serialNumber);
 
 		ruqPacket.setT(Utils.getSecondsFromY2K());
-		ruqPacket.setQueryMode(mode);
-		ruqPacket.setQueryAttribute(attribute);
 		ruqPacket.addQuery(code, mask);
 		
 		// Send the packet and waiting for reply message
@@ -345,13 +344,18 @@ public class UcodeRP {
 	}
 	
 	/**
-	 * Resolve ucode in normal client process
+	 * Resolve ucode in normal client process. The serial number will be set randomly [0..255].
+	 * Command send time (t) will be set to seconds from 2000 JAN 1 00:00AM GMT
 	 * @param ruqPacket
 	 * @param host
 	 */
 	public final void resolveUcodeRemote(ResUcdQuery ruqPacket, String host) {
 		// Check if client has properly initialized
 		if(client == null) throw new NullPointerException("Client of type UC must not be null.");
+		
+		// Random serial number for the packet
+		short serialNumber = (short) new Random().nextInt(256);
+		ruqPacket.setSerialNumber((byte) serialNumber);		
 		
 		// Update command send time
 		ruqPacket.setT(Utils.getSecondsFromY2K());
@@ -397,14 +401,14 @@ public class UcodeRP {
 		ResUcdQuery packet = new ResUcdQuery(t, mode, attribute, ucodeType, ucodeLength);
 				
 		packet.setSerialNumber(buffer[UrpPacket.Field.SERIAL_NO.getByteIndex()]);
-		short commandId = (short) ( ( buffer[UrpPacket.Field.OPERATOR_HIGH.getByteIndex()] << 8 ) | buffer[UrpPacket.Field.OPERATOR_HIGH.getByteIndex()] );		
+		short commandId = (short) ( ( buffer[UrpPacket.Field.OPERATOR_HIGH.getByteIndex()] << 8 ) | buffer[UrpPacket.Field.OPERATOR_LOW.getByteIndex()] );		
 		packet.setCommandId(Command.valueOf(commandId));
 		
 		// Add queryucode/querymask from buffer assuming the code and mask are always of the same size
 		int queryUcodeSize = ( buffer.length - ResUcdQueryField.QUERY_UCODE.getByteIndex() ) / 2;
 		int ucodeLastByteIndex = ( ResUcdQueryField.QUERY_UCODE.getByteIndex() + queryUcodeSize ) - 1; 
-		packet.addQueryUcode(Arrays.copyOfRange(buffer, ResUcdQueryField.QUERY_UCODE.getByteIndex(), ucodeLastByteIndex));
-		packet.addQueryMask(Arrays.copyOfRange(buffer, ucodeLastByteIndex + 1, buffer.length - 1));
+		packet.addQueryUcode(Arrays.copyOfRange(buffer, ResUcdQueryField.QUERY_UCODE.getByteIndex(), ucodeLastByteIndex +  1));
+		packet.addQueryMask(Arrays.copyOfRange(buffer, ucodeLastByteIndex + 1, buffer.length));
 		
 		return packet;
 	}

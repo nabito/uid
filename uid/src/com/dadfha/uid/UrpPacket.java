@@ -51,7 +51,7 @@ public class UrpPacket {
 	 * Construct packet from byte array
 	 */
 	public UrpPacket(byte[] byteArray) {
-		data = new ArrayList<Byte>( Bytes.asList( Arrays.copyOfRange( byteArray, 0, Field.values().length - 1 ) ) );
+		data = new ArrayList<Byte>( Bytes.asList( Arrays.copyOfRange( byteArray, 0, Field.values().length ) ) );
 		initFieldsData();	
 	}
 	
@@ -253,11 +253,13 @@ public class UrpPacket {
 	/**
 	 * Add copy of the whole byte array to the collection.
 	 * @param byteArray
+	 * @param indexFrom the first array index to copy, inclusive
+	 * @param indexTo the final array index to copy, inclusive
 	 * @return int index of first byte added	 
 	 */
 	final int addBytes(byte[] byteArray, int indexFrom, int indexTo) {
 		int head = this.data.size();
-		data.addAll( Bytes.asList( Arrays.copyOfRange( byteArray, indexFrom, indexTo ) ) );		
+		data.addAll( Bytes.asList( Arrays.copyOfRange( byteArray, indexFrom, indexTo + 1 ) ) );		
 		updateLength();
 		return head;
 	}
