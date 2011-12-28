@@ -304,6 +304,8 @@ public final class ResUcdQuery extends UrpQuery {
 		long[] mask = queryMask.getLongArray();
 		this.queryUcode.addAll(Longs.asList(ucode));
 		this.queryMask.addAll(Longs.asList(mask));
+		updateUcodeLength();
+		updateLength();				
 		return index;
 	}
 	

@@ -289,6 +289,8 @@ public final class ResUcdRecieve extends UrpRecieve {
 	public final int addResUcdData(byte[] byteArray) {		
 		int index = data.size();		
 		Utils.addBytesToLongList(byteArray, data);
+		updateDataLength();
+		updateLength();		
 		return index;
 	}
 	
@@ -358,7 +360,9 @@ public final class ResUcdRecieve extends UrpRecieve {
 	 */
 	public final int addMask(byte[] byteArray) {
 		int index = returnMask.size();		
-		Utils.addBytesToLongList(byteArray, returnMask);		
+		Utils.addBytesToLongList(byteArray, returnMask);	
+		updateMaskLength();
+		updateLength();		
 		return index;		
 	}
 	
