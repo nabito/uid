@@ -13,10 +13,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
-
 import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -44,7 +41,11 @@ public class UC {
 		Ucode mask = new Ucode(new long[] { 0xffffffffffffffffL, 0xffffffffffffffffL }, UcodeType.UID_128);
 		
 		// Construct query packet
-		ResUcdQuery ruqPacket = new ResUcdQuery(QueryMode.UIDC_RSMODE_RESOLUTION, QueryAttribute.UIDC_ATTR_SS, code.getUcodeType());
+		//ResUcdQuery ruqPacket = new ResUcdQuery(QueryMode.UIDC_RSMODE_RESOLUTION, QueryAttribute.UIDC_ATTR_SS, code.getUcodeType());
+		
+		// ...Or construct the cascade resolution request
+		ResUcdQuery ruqPacket = new ResUcdQuery(QueryMode.UIDC_RSMODE_CASCADE, QueryAttribute.UIDC_ATTR_SS, code.getUcodeType());
+		
 		ruqPacket.addQuery(code, mask);
 		
 		// Remotely resolve ucode

@@ -72,6 +72,17 @@ public class UcodeRS {
 		DataFile file2 = new DataFile(new Ucode(0x0efffec000000000L, 0x0000000000050000L), new Ucode(0xffffffffffffffffL, 0xffffffffffff0000L), CascadeMode.UIDC_CSC);
 		
 		try {
+			
+			file2.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050100L),
+					new Ucode(0xffffffffffffffffL, 0xffffffffffffff00L),	
+					DataAttribute.UIDC_ATTR_RS,
+					(short) 1,
+					3600,
+					DataType.UIDC_DATATYPE_UCODE_IPV4,
+					"172.26.30.78") );			
+			
+			/* 
+			// For cascade resolution testing purpose this may be commented instead of the prior item
 			file2.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050100L),
 												new Ucode(0xffffffffffffffffL, 0xffffffffffffff00L),	
 												DataAttribute.UIDC_ATTR_SS,
@@ -79,6 +90,7 @@ public class UcodeRS {
 												0,
 												DataType.UIDC_DATATYPE_UCODE_URL,
 												"http://www.uidcenter.org") );
+			*/
 		
 			file2.addDataEntry( new DataEntry( new Ucode(0x0efffec000000000L, 0x0000000000050200L),
 					new Ucode(0xffffffffffffffffL, 0xffffffffffffff00L),	
